@@ -6,12 +6,13 @@ openai==0.27.6
 altair==4
 duckduckgo-search==6.1.7
 pypdf==3.16.4
-chromadb
+chromadb==0.5.5
+
 # Core Dependencies
-tiktoken
-faiss-cpu
-Pillow
- 
+tiktoken==0.7.0
+faiss-cpu==1.8.0.post1
+Pillow===10.4.0
+
 # Additional Dependencies
 setuptools>=42
 wheel>=0.36.2
