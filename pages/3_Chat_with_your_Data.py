@@ -20,7 +20,7 @@ class CustomDataChatbot:
 
     def __init__(self):
         utils.configure_openai_api_key()
-        self.openai_model = "gpt-3.5-turbo"
+        self.openai_model = "gpt-4o-mini"
 
     def save_file(self, file):
         folder = 'tmp'
