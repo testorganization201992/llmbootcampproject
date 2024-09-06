@@ -1,10 +1,11 @@
 import utils
 import streamlit as st
 from langchain.agents import AgentType
-from langchain.chat_models import ChatOpenAI
-from langchain.tools import DuckDuckGoSearchRun
-from langchain.agents import initialize_agent, Tool
-from langchain.callbacks import StreamlitCallbackHandler
+from langchain_openai import ChatOpenAI
+from langchain_community.tools import DuckDuckGoSearchRun
+from langchain.agents import AgentExecutor, create_tool_calling_agent, Tool, initialize_agent
+from langchain_community.callbacks.streamlit import StreamlitCallbackHandler
+from langchain.prompts import ChatPromptTemplate
 
 
 
@@ -17,7 +18,7 @@ class ChatbotTools:
 
     def __init__(self):
         utils.configure_openai_api_key()
-        self.openai_model = "gpt-3.5-turbo"
+        self.openai_model = "gpt-4o-mini"
 
     def setup_agent(self):
         # Define tool
@@ -39,6 +40,7 @@ class ChatbotTools:
             handle_parsing_errors=True,
             verbose=True
         )
+
         return agent
 
     @utils.enable_chat_history
