@@ -1,12 +1,17 @@
 import utils
 import streamlit as st
+import os
 from langchain.agents import AgentType
 from langchain_openai import ChatOpenAI
 from langchain_community.tools import DuckDuckGoSearchRun
 from langchain.agents import AgentExecutor, create_tool_calling_agent, Tool, initialize_agent
 from langchain_community.callbacks.streamlit import StreamlitCallbackHandler
 from langchain.prompts import ChatPromptTemplate
+from langchain_community.utilities import BingSearchAPIWrapper
+from langchain_community.tools.bing_search import BingSearchResults
 
+
+BING_SEARCH_URL = "https://api.bing.microsoft.com/v7.0/search"
 
 
 st.set_page_config(page_title="ChatWeb", page_icon="🌐")
@@ -17,16 +22,16 @@ st.write('Equipped with internet agent, enables users to ask questions about rec
 class ChatbotTools:
 
     def __init__(self):
-        utils.configure_openai_api_key()
+        utils.configure_openai_bing_api_keys()
         self.openai_model = "gpt-4o-mini"
 
     def setup_agent(self):
         # Define tool
-        ddg_search = DuckDuckGoSearchRun()
+        bing_search = BingSearchAPIWrapper()
         tools = [
             Tool(
-                name="DuckDuckGoSearch",
-                func=ddg_search.run,
+                name="BingSearch",
+                func=bing_search.run,
                 description="Useful for when you need to answer questions about current events. You should ask targeted questions",
             )
         ]

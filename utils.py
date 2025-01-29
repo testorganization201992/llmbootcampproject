@@ -44,7 +44,21 @@ def display_msg(msg, author):
     st.chat_message(author).write(msg)
 
 
-def configure_openai_api_key():
+def configure_openai_bing_api_keys():
+    
+    openai_api_key = st.sidebar.text_input(
+        label="OpenAI API Key",
+        type="password",
+        value=st.session_state['OPENAI_API_KEY'] if 'OPENAI_API_KEY' in st.session_state else '',
+        placeholder="sk-..."
+    )
+
+    bing_api_key = st.sidebar.text_input(
+        label="Bing API Key",
+        type="password",
+        value=st.session_state['BING_API_KEY'] if 'BING_API_KEY' in st.session_state else '',
+        placeholder=""
+    )
 
     # st.sidebar.image("DSD logo.png", width=300)
     # Open the image
@@ -59,18 +73,19 @@ def configure_openai_api_key():
     "#### <a href='https://datasciencedojo.com/' style='color:light-blue;'>Powered by Data Science Dojo</a>",
     unsafe_allow_html=True
      )
-    openai_api_key = st.sidebar.text_input(
-        label="OpenAI API Key",
-        type="password",
-        value=st.session_state['OPENAI_API_KEY'] if 'OPENAI_API_KEY' in st.session_state else '',
-        placeholder="sk-..."
-    )
+    
 
+    if bing_api_key:
+        st.session_state['BING_SUBSCRIPTION_KEY'] = bing_api_key
+        os.environ['BING_SUBSCRIPTION_KEY'] = bing_api_key
+    else:
+        st.error("Please add your api keys to continue.")
+        
 
     if openai_api_key:
         st.session_state['OPENAI_API_KEY'] = openai_api_key
         os.environ['OPENAI_API_KEY'] = openai_api_key
     else:
-        st.error("Please add your OpenAI API key to continue.")
+        st.error("Please add your api keys to continue.")
         st.stop()
-    return openai_api_key
+    return openai_api_key, bing_api_key

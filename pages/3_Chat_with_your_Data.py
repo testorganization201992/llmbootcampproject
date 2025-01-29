@@ -19,7 +19,7 @@ st.write('Has access to custom documents and can respond to user queries by refe
 class CustomDataChatbot:
 
     def __init__(self):
-        utils.configure_openai_api_key()
+        utils.configure_openai_bing_api_keys()
         self.openai_model = "gpt-4o-mini"
 
     def save_file(self, file):
@@ -34,14 +34,22 @@ class CustomDataChatbot:
 
     @st.spinner('Analyzing documents..')
     def setup_qa_chain(self, uploaded_files):
+         # Initialize progress bar for document processing
+        total_files = len(uploaded_files)
+        progress_bar = st.progress(0, text=f"Processing {total_files} files...")
+
         # Load documents
         docs = []
-
-        for file in uploaded_files:
+        for idx, file in enumerate(uploaded_files):
             file_path = self.save_file(file)
             loader = PyPDFLoader(file_path)
             docs.extend(loader.load())
 
+            # Update progress bar for file upload
+            progress_value = (idx + 1) / total_files
+            progress_text = f"Processed {idx + 1} out of {total_files} files..."
+            progress_bar.progress(progress_value, text=progress_text)
+            
         # Split documents
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1500,
