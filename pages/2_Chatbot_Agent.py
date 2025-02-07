@@ -10,31 +10,41 @@ from langchain.prompts import ChatPromptTemplate
 from langchain_community.utilities import BingSearchAPIWrapper
 from langchain_community.tools.bing_search import BingSearchResults
 
-
 BING_SEARCH_URL = "https://api.bing.microsoft.com/v7.0/search"
-
 
 st.set_page_config(page_title="ChatWeb", page_icon="🌐")
 st.header('Chatbot with Web Browser Access')
 st.write('Equipped with internet agent, enables users to ask questions about recent events')
 
-
 class ChatbotTools:
-
     def __init__(self):
-        utils.configure_openai_bing_api_keys()
+        utils.configure_openai_api_key()
         self.openai_model = "gpt-4o-mini"
-
+    
     def setup_agent(self):
-        # Define tool
-        bing_search = BingSearchAPIWrapper()
-        tools = [
-            Tool(
-                name="BingSearch",
-                func=bing_search.run,
-                description="Useful for when you need to answer questions about current events. You should ask targeted questions",
-            )
-        ]
+        # Check if Bing API key is available
+        bing_subscription_key = os.getenv('BING_SUBSCRIPTION_KEY')
+        
+        if bing_subscription_key:
+            # Use BingSearch if API key is available
+            bing_search = BingSearchAPIWrapper()
+            tools = [
+                Tool(
+                    name="BingSearch",
+                    func=bing_search.run,
+                    description="Useful for when you need to answer questions about current events. You should ask targeted questions",
+                )
+            ]
+        else:
+            # Fallback to DuckDuckGo if Bing API key is not available
+            ddg_search = DuckDuckGoSearchRun()
+            tools = [
+                Tool(
+                    name="DuckDuckGoSearch",
+                    func=ddg_search.run,
+                    description="Useful for when you need to answer questions about current events. You should ask targeted questions",
+                )
+            ]
 
         # Setup LLM and Agent
         llm = ChatOpenAI(model_name=self.openai_model, streaming=True)
@@ -45,11 +55,22 @@ class ChatbotTools:
             handle_parsing_errors=True,
             verbose=True
         )
-
         return agent
-
+    
     @utils.enable_chat_history
     def main(self):
+        bing_subscription_key = st.sidebar.text_input(
+            label="Bing API Key",
+            type="password",
+            value=st.session_state['BING_SUBSCRIPTION_KEY'] if 'BING_SUBSCRIPTION_KEY' in st.session_state else '',
+            placeholder="sk-..."
+        )
+        if bing_subscription_key:
+            st.session_state['BING_SUBSCRIPTION_KEY'] = bing_subscription_key
+            os.environ['BING_SUBSCRIPTION_KEY'] = bing_subscription_key
+        else:
+            st.warning("No Bing subscription key provided. Falling back to DuckDuckGo.")
+
         agent = self.setup_agent()
         user_query = st.chat_input(placeholder="Ask me anything!")
         if user_query:
@@ -63,8 +84,6 @@ class ChatbotTools:
                     st.write(response)
                 except Exception as e:
                     print(e)
-
-
 
 if __name__ == "__main__":
     obj = ChatbotTools()
