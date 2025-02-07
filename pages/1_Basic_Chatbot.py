@@ -13,7 +13,7 @@ st.write('Allows users to interact with the OpenAI LLMs')
 class Basic:
 
     def __init__(self):
-        utils.configure_openai_bing_api_keys()
+        utils.configure_openai_api_key()
         self.openai_model = "gpt-4o-mini"
 
     def setup_chain(self):
