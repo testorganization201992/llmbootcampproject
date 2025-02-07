@@ -22,7 +22,7 @@ st.write('Equipped with internet agent, enables users to ask questions about rec
 class ChatbotTools:
 
     def __init__(self):
-        utils.configure_openai_bing_api_keys()
+        utils.configure_openai_api_key()
         self.openai_model = "gpt-4o-mini"
 
     def setup_agent(self):
@@ -50,6 +50,18 @@ class ChatbotTools:
 
     @utils.enable_chat_history
     def main(self):
+        bing_subscription_key = st.sidebar.text_input(
+        label="Bing API Key",
+        type="password",
+        value=st.session_state['BING_SUBSCRIPTION_KEY'] if 'BING_SUBSCRIPTION_KEY' in st.session_state else '',
+        placeholder="sk-..."
+    )
+        if bing_subscription_key:
+            st.session_state['BING_SUBSCRIPTION_KEY'] = bing_subscription_key
+            os.environ['BING_SUBSCRIPTION_KEY'] = bing_subscription_key
+        else:
+            st.error("Please add your Bing subscription key to continue.")
+            st.stop()
         agent = self.setup_agent()
         user_query = st.chat_input(placeholder="Ask me anything!")
         if user_query:
