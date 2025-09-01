@@ -81,4 +81,57 @@ result = chain.invoke(
     },
 )
 ```
+# Assignment 2: Add Wikipedia and Arxiv Tools
+
+## Part 1: Update Requirements
+**Add to requirements.txt:**
+```
+wikipedia>=1.4.0
+arxiv==2.2.0
+```
+
+## Part 2: Add Tool Imports
+**Add after existing imports:**
+```python
+from langchain_community.tools import WikipediaQueryRun
+from langchain_community.utilities import WikipediaAPIWrapper
+from langchain_community.utilities import ArxivAPIWrapper
+from langchain.agents import Tool
+```
+
+## Part 3: Update Header Description
+**Replace:**
+```python
+st.write("Equipped with Tavily search agent only")
+```
+
+**With:**
+```python
+st.write("Equipped with Tavily search agent, Wikipedia, and Arxiv tools.")
+```
+
+## Part 4: Add Extra Tools
+**Replace:**
+```python
+tools = [tavily_search]
+```
+
+**With:**
+```python
+wiki_agent = Tool(
+    name="wikipedia",
+    func=WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper()).run,
+    description="Search Wikipedia for specific topics, people, or events.",
+)
+
+arxiv = Tool(
+    name="arxiv",
+    func=ArxivAPIWrapper().run,
+    description="Search research papers, scientific articles, and preprints.",
+)
+
+tools = [tavily_search, wiki_agent, arxiv]
+```
+
+
 
