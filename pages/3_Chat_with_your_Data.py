@@ -1,111 +1,199 @@
 import os
-import utils
 import streamlit as st
-from streaming import StreamHandler
+import utils
+
+from typing import List, TypedDict, Literal, Optional
+from langchain_core.documents import Document
+
 from langchain_openai import ChatOpenAI
 from langchain_community.document_loaders import PyPDFLoader
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationalRetrievalChain
-from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.prompts import ChatPromptTemplate
 
-st.set_page_config(page_title="ChatPDF", page_icon="📄")
-st.header('Chat with your Documents')
-st.write('Has access to custom documents and can respond to user queries by referring to the content within those documents')
+from langgraph.graph import StateGraph, END
 
+# --------------------------
+# Page config
+# --------------------------
+st.set_page_config(page_title="ChatPDF (Simple Agentic RAG)", page_icon="📄")
+st.header("Chat with your Documents — Simple Agentic RAG")
+st.write("Decides between summarization or specific fact answering, then retrieves and generates accordingly.")
+
+# --------------------------
+# Utilities
+# --------------------------
+def save_file(file, folder="tmp") -> str:
+    os.makedirs(folder, exist_ok=True)
+    file_path = os.path.join(folder, file.name)
+    with open(file_path, "wb") as f:
+        f.write(file.getvalue())
+    return file_path
+
+def build_vectorstore(files) -> FAISS:
+    docs: List[Document] = []
+    progress_bar = st.sidebar.progress(0, text=f"Processing {len(files)} files...")
+
+    for idx, file in enumerate(files):
+        path = save_file(file)
+        loader = PyPDFLoader(path)
+        docs.extend(loader.load())
+        progress_bar.progress((idx + 1) / len(files), text=f"Processed {idx+1}/{len(files)}")
+
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
+    chunks = text_splitter.split_documents(docs)
+
+    embeddings = OpenAIEmbeddings()
+    vectordb = FAISS.from_documents(chunks, embeddings)
+    return vectordb
+
+# --------------------------
+# Simple Agentic RAG Graph
+# --------------------------
+class RAGState(TypedDict):
+    question: str
+    mode: Literal["summary", "fact"]
+    documents: List[Document]
+    generation: str
+
+def build_simple_agentic_rag(retriever, llm: ChatOpenAI):
+    """
+    Graph:
+      classify_mode -> retrieve -> generate -> END
+    """
+
+    # --- Node: classify mode (summary vs fact) ---
+    SUMMARY_HINTS = ("summarize", "summary", "overview", "key points", "bullet", "synthesize")
+    FACT_HINTS = ("when", "date", "who", "where", "amount", "total", "price", "figure", "specific", "exact")
+
+    def classify_mode(state: RAGState) -> RAGState:
+        q = state["question"].lower()
+        if any(w in q for w in SUMMARY_HINTS) and not any(w in q for w in FACT_HINTS):
+            mode: Literal["summary", "fact"] = "summary"
+        elif any(w in q for w in FACT_HINTS):
+            mode = "fact"
+        else:
+            # default to fact unless they asked to summarize
+            mode = "summary" if "summary" in q or "summarize" in q else "fact"
+        return {**state, "mode": mode}
+
+    # --- Node: retrieve ---
+    def retrieve(state: RAGState) -> RAGState:
+        q = state["question"]
+        k = 8 if state["mode"] == "summary" else 3
+        docs = retriever.invoke(q)
+        return {**state, "documents": docs[:k]}
+
+    # --- Node: generate ---
+    gen_prompt_summary = ChatPromptTemplate.from_messages(
+        [
+            ("system",
+             "You are a helpful assistant. Create a concise, faithful summary ONLY using the provided context. "
+             "Prefer bullet points if helpful. Do not use outside knowledge."),
+            ("human",
+             "Question:\n{question}\n\n"
+             "Context (multiple document chunks):\n{context}\n\n"
+             "Write a grounded summary:")
+        ]
+    )
+
+    gen_prompt_fact = ChatPromptTemplate.from_messages(
+        [
+            ("system",
+             "You are a helpful assistant. Answer precisely and ONLY using the provided context. "
+             "If the context is insufficient, say so."),
+            ("human",
+             "Question:\n{question}\n\n"
+             "Context:\n{context}\n\n"
+             "Answer:")
+        ]
+    )
+
+    def generate(state: RAGState) -> RAGState:
+        ctx = "\n\n---\n\n".join(d.page_content for d in state.get("documents", []))
+        if not ctx.strip():
+            return {**state, "generation": "I couldn't find enough information in the documents to answer that."}
+
+        if state["mode"] == "summary":
+            answer = llm.invoke(gen_prompt_summary.format_messages(
+                question=state["question"], context=ctx
+            )).content
+        else:
+            answer = llm.invoke(gen_prompt_fact.format_messages(
+                question=state["question"], context=ctx
+            )).content
+        return {**state, "generation": answer}
+
+    # --- Build graph ---
+    graph = StateGraph(RAGState)
+    graph.add_node("classify_mode", classify_mode)
+    graph.add_node("retrieve", retrieve)
+    graph.add_node("generate", generate)
+
+    graph.set_entry_point("classify_mode")
+    graph.add_edge("classify_mode", "retrieve")
+    graph.add_edge("retrieve", "generate")
+    graph.add_edge("generate", END)
+
+    return graph.compile()
+
+# --------------------------
+# App
+# --------------------------
 class CustomDataChatbot:
     def __init__(self):
         utils.configure_openai_api_key()
         self.openai_model = "gpt-4o-mini"
 
-    def save_file(self, file):
-        folder = 'tmp'
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        file_path = f'./{folder}/{file.name}'
-        with open(file_path, 'wb') as f:
-            f.write(file.getvalue())
-        return file_path
-
-    @st.spinner('Analyzing documents..')
-    def setup_qa_chain(self, uploaded_files):
-        # Initialize progress bar for document processing in the sidebar
-        total_files = len(uploaded_files)
-        progress_bar = st.sidebar.progress(0, text=f"Processing {total_files} files...")
-
-        # Load documents
-        docs = []
-        for idx, file in enumerate(uploaded_files):
-            file_path = self.save_file(file)
-            loader = PyPDFLoader(file_path)
-            docs.extend(loader.load())
-
-            # Update progress bar for file upload in the sidebar
-            progress_value = (idx + 1) / total_files
-            progress_text = f"Processed {idx + 1} out of {total_files} files..."
-            progress_bar.progress(progress_value, text=progress_text)
-
-        # Split documents
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1500,
-            chunk_overlap=200
-        )
-        splits = text_splitter.split_documents(docs)
-
-        # Create embeddings and store in vectordb
-        embeddings = OpenAIEmbeddings()
-        vectordb = FAISS.from_documents(splits, embeddings)
-
-        # Define retriever
+    def setup_graph(self, uploaded_files):
+        vectordb = build_vectorstore(uploaded_files)
         retriever = vectordb.as_retriever()
-
-        # Setup memory for contextual conversation
-        memory = ConversationBufferMemory(
-            memory_key='chat_history',
-            return_messages=True
-        )
-
-        # Setup LLM and QA chain
-        llm = ChatOpenAI(model_name=self.openai_model,
-                         temperature=0, streaming=True)
-        qa_chain = ConversationalRetrievalChain.from_llm(
-            llm, retriever=retriever, memory=memory, verbose=True)
-        return qa_chain
-
+        llm = ChatOpenAI(model=self.openai_model, temperature=0, streaming=False)
+        return build_simple_agentic_rag(retriever, llm)
+    
     @utils.enable_chat_history
     def main(self):
-        if 'uploaded_files' not in st.session_state:
+        if "uploaded_files" not in st.session_state:
             st.session_state.uploaded_files = []
+        if "rag_app" not in st.session_state:
+            st.session_state.rag_app = None
 
-        # User Inputs
-        uploaded_files = st.sidebar.file_uploader(label='Upload PDF files', type=['pdf'], accept_multiple_files=True)
+        uploaded_files = st.sidebar.file_uploader(
+            label="Upload PDF files",
+            type=["pdf"],
+            accept_multiple_files=True
+        )
 
         if uploaded_files:
-            current_file_names = [file.name for file in uploaded_files]
-            previous_file_names = [file.name for file in st.session_state.uploaded_files]
-
-            if set(current_file_names) != set(previous_file_names):
+            current = {f.name for f in uploaded_files}
+            prev = {f.name for f in st.session_state.get("uploaded_files", [])}
+            if current != prev or st.session_state.rag_app is None:
                 st.session_state.uploaded_files = uploaded_files
-                qa_chain = self.setup_qa_chain(uploaded_files)
-                st.session_state.qa_chain = qa_chain
+                with st.spinner("Indexing and preparing…"):
+                    st.session_state.rag_app = self.setup_graph(uploaded_files)
         else:
             st.error("Please upload PDF documents to continue!")
             st.stop()
 
-        user_query = st.chat_input(placeholder="Ask me anything!")
-        if user_query and 'qa_chain' in st.session_state:
-            utils.display_msg(user_query, 'user')
+        user_query = st.chat_input(placeholder="Ask for a summary or a specific fact…")
+        if not user_query:
+            return
 
-            with st.chat_message("assistant"):
-                try:
-                    st_cb = StreamHandler(st.empty())
-                    response = st.session_state.qa_chain.run(user_query, callbacks=[st_cb])
-                    st.session_state.messages.append(
-                        {"role": "assistant", "content": response})
-                except Exception as e:
-                    print(e)
+        st.chat_message("user").write(user_query)
+        with st.chat_message("assistant"):
+            try:
+                result = st.session_state.rag_app.invoke(
+                    {"question": user_query, "mode": "fact", "documents": [], "generation": ""}
+                )
+                answer = result.get("generation", "").strip() or "I couldn't find enough information in the documents to answer that."
+                st.write(answer)
+            except Exception as e:
+                st.error(f"Error: {e}")
 
+# --------------------------
+# Run
+# --------------------------
 if __name__ == "__main__":
-    obj = CustomDataChatbot()
-    obj.main()
+    app = CustomDataChatbot()
+    app.main()
