@@ -1,33 +1,41 @@
- bootcamp core packages
-redis==4.6.0
-langchain==0.3.25
+# langchain
 langchain-core==0.3.64
 langchain-openai==0.3.21
 langchain-community==0.3.24
 langchain-experimental==0.3.4
 langchain-text-splitters==0.3.8
 langchain-anthropic==0.3.15
-langgraph==0.4.8
-weaviate-client==4.15.0
-nbgitpuller==1.2.0
+langgraph==0.5.3
+
+
+# Core Dependencies
 tiktoken==0.9.0
 faiss-cpu==1.11.0
-duckduckgo-search==8.0.2
-unstructured==0.17.2
-python-dotenv==1.0.0
-chromadb==1.0.12
-ragas==0.2.15
-openai-agents==0.0.17
-mcp==1.9.3
-python-a2a==0.5.9
-langchain-chroma==0.2.4
-numexpr==2.10.2
-pandas==2.3.0
-Bottleneck==1.5.0
-datasets==3.6.0
-scipy==1.15.3
-seaborn==0.13.2
-matplotlib==3.10.3
 
-# streamlit package
-streamlit==1.45.1
+# Search feature
+tavily-python==0.7.1
+langchain-tavily==0.2.11
+
+# Other tools
+pypdf==6.0.0
+# langchain
+langchain-core==0.3.64
+langchain-openai==0.3.21
+langchain-community==0.3.24
+langchain-experimental==0.3.4
+langchain-text-splitters==0.3.8
+langchain-anthropic==0.3.15
+langgraph==0.5.3
+
+
+# Core Dependencies
+tiktoken==0.9.0
+faiss-cpu==1.11.0
+
+# Search feature
+tavily-python==0.7.1
+langchain-tavily==0.2.11
+
+# Other tools
+pypdf==6.0.0
+
