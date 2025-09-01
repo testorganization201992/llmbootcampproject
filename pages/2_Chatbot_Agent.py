@@ -1,90 +1,71 @@
-import utils
 import streamlit as st
-import os
-from langchain.agents import AgentType
-from langchain_openai import ChatOpenAI
-from langchain_community.tools import DuckDuckGoSearchRun
-from langchain.agents import AgentExecutor, create_tool_calling_agent, Tool, initialize_agent
-from langchain_community.callbacks.streamlit import StreamlitCallbackHandler
-from langchain.prompts import ChatPromptTemplate
-from langchain_community.utilities import BingSearchAPIWrapper
-from langchain_community.tools.bing_search import BingSearchResults
+import utils
 
-BING_SEARCH_URL = "https://api.bing.microsoft.com/v7.0/search"
+from langchain_openai import ChatOpenAI
+from langchain_tavily import TavilySearch
+from langgraph.prebuilt import create_react_agent
+from langchain_community.callbacks.streamlit import StreamlitCallbackHandler
 
 st.set_page_config(page_title="ChatWeb", page_icon="🌐")
 st.header('Chatbot with Web Browser Access')
 st.write('Equipped with internet agent, enables users to ask questions about recent events')
 
-class ChatbotTools:
-    def __init__(self):
-        utils.configure_openai_api_key()
-        self.openai_model = "gpt-4o-mini"
-    
-    def setup_agent(self):
-        # Check if Bing API key is available
-        bing_subscription_key = os.getenv('BING_SUBSCRIPTION_KEY')
-        
-        if bing_subscription_key:
-            # Use BingSearch if API key is available
-            bing_search = BingSearchAPIWrapper()
-            tools = [
-                Tool(
-                    name="BingSearch",
-                    func=bing_search.run,
-                    description="Useful for when you need to answer questions about current events. You should ask targeted questions",
-                )
-            ]
-        else:
-            # Fallback to DuckDuckGo if Bing API key is not available
-            ddg_search = DuckDuckGoSearchRun()
-            tools = [
-                Tool(
-                    name="DuckDuckGoSearch",
-                    func=ddg_search.run,
-                    description="Useful for when you need to answer questions about current events. You should ask targeted questions",
-                )
-            ]
+# --- Tavily key input (kept in session_state only) ---
+tavily_key = st.sidebar.text_input(
+    "Tavily API Key",
+    type="password",
+    value=st.session_state.get("TAVILY_API_KEY", ""),
+    placeholder="tvly-...",
+)
 
-        # Setup LLM and Agent
-        llm = ChatOpenAI(model_name=self.openai_model, streaming=True)
-        agent = initialize_agent(
-            tools=tools,
-            llm=llm,
-            agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-            handle_parsing_errors=True,
-            verbose=True
-        )
-        return agent
-    
-    @utils.enable_chat_history
-    def main(self):
-        bing_subscription_key = st.sidebar.text_input(
-            label="Bing API Key",
-            type="password",
-            value=st.session_state['BING_SUBSCRIPTION_KEY'] if 'BING_SUBSCRIPTION_KEY' in st.session_state else '',
-            placeholder="sk-..."
-        )
-        if bing_subscription_key:
-            st.session_state['BING_SUBSCRIPTION_KEY'] = bing_subscription_key
-            os.environ['BING_SUBSCRIPTION_KEY'] = bing_subscription_key
-        else:
-            st.warning("No Bing subscription key provided. Falling back to DuckDuckGo.")
+if tavily_key:
+    st.session_state["TAVILY_API_KEY"] = tavily_key
 
-        agent = self.setup_agent()
-        user_query = st.chat_input(placeholder="Ask me anything!")
-        if user_query:
-            utils.display_msg(user_query, 'user')
-            with st.chat_message("assistant"):
-                try:
-                    st_cb = StreamlitCallbackHandler(st.container())
-                    response = agent.run(user_query, callbacks=[st_cb])
-                    st.session_state.messages.append(
-                        {"role": "assistant", "content": response})
-                    st.write(response)
-                except Exception as e:
-                    print(e)
+# --- Initialize agent if key is present ---
+agent = None
+if st.session_state.get("TAVILY_API_KEY"):
+    utils.configure_openai_api_key()
+    llm = ChatOpenAI(model="gpt-4o-mini", streaming=True)
+
+    tavily_search_tool = TavilySearch(
+        max_results=5,
+        topic="general",
+        tavily_api_key=st.session_state["TAVILY_API_KEY"],
+    )
+
+    agent = create_react_agent(llm, [tavily_search_tool])
+else:
+    st.warning("Please enter your Tavily API key in the sidebar to enable search.")
+
+@utils.enable_chat_history
+def main():
+    if not agent:
+        return
+
+    user_query = st.chat_input("Ask me anything!")
+    if not user_query:
+        return
+
+    st.chat_message("user").write(user_query)
+    with st.chat_message("assistant"):
+        try:
+            st_cb = StreamlitCallbackHandler(st.container())
+            response = agent.invoke(
+                {"messages": user_query},
+                config={"callbacks": [st_cb]},
+            )
+            # extract final answer
+            if "messages" in response and response["messages"]:
+                answer = response["messages"][-1].content
+            else:
+                answer = str(response)
+
+            st.session_state.messages.append(
+                {"role": "assistant", "content": answer}
+            )
+            st.write(answer)
+        except Exception as e:
+            st.error(f"Error: {e}")
 
 if __name__ == "__main__":
-    obj = ChatbotTools()
-    obj.main()
+    main()
