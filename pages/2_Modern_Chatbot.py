@@ -90,7 +90,7 @@ def setup_page():
         max-width: 30%;
         padding: 1.2rem 1.8rem;
         border-radius: 18px;
-        font-size: 1.44rem;
+        font-size: 1.6rem;
         line-height: 1.6;
         font-weight: 500;
         word-wrap: break-word;
@@ -139,7 +139,7 @@ def setup_page():
     .stChatInput textarea {
         border: none !important;
         background: transparent !important;
-        font-size: 1.44rem !important;
+        font-size: 1.6rem !important;
         padding: 20px 25px !important;
         min-height: 160px !important;
         line-height: 1.6 !important;
@@ -171,7 +171,7 @@ def setup_page():
     div[data-testid="stChatInput"] div textarea,
     .stChatInput div div input,
     .stChatInput div div textarea {
-        font-size: 1.44rem !important;
+        font-size: 1.6rem !important;
         font-weight: 500 !important;
         line-height: 1.6 !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
