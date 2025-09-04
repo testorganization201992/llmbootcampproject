@@ -5,6 +5,9 @@ A sleek, modern chatbot with the best appearance and functionality.
 
 import streamlit as st
 import os
+import sys
+sys.path.append('..')
+from themes.modern_theme import apply_modern_theme, show_processing_animation
 from langchain_openai.chat_models import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -155,12 +158,18 @@ def main():
     setup_page()
     
     
-    # Check API key
+    # Check API key - Show login screen
     if not configure_api_key():
         st.markdown("""
-        <div style="text-align: center; padding: 3rem; color: #666;">
-            <h3>🔑 Please enter your OpenAI API key in the sidebar to get started</h3>
-            <p>Once connected, you can start chatting with the AI assistant!</p>
+        <div class="welcome-screen" style="height: 500px;">
+            <div class="welcome-icon">🔐</div>
+            <h3>API Key Required</h3>
+            <p>Please enter your OpenAI API key in the sidebar to continue</p>
+            <div style="margin-top: 2rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 10px; backdrop-filter: blur(5px);">
+                <p style="font-size: 1rem; margin: 0.5rem 0;">1. Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" style="color: #667eea;">OpenAI Platform</a></p>
+                <p style="font-size: 1rem; margin: 0.5rem 0;">2. Enter it in the sidebar</p>
+                <p style="font-size: 1rem; margin: 0.5rem 0;">3. Click "Connect" to start chatting</p>
+            </div>
         </div>
         """, unsafe_allow_html=True)
         return
@@ -214,24 +223,8 @@ def main():
         
         # Generate response
         try:
-            # Custom spinner positioned like AI response
-            st.markdown("""
-            <div class="chat-message assistant" style="margin-bottom: 0;">
-                <div class="message-bubble assistant" style="background: rgba(241, 243, 244, 0.8); display: flex; align-items: center; min-height: 50px;">
-                    <div style="display: flex; gap: 0.5rem;">
-                        <div style="width: 8px; height: 8px; background: #667eea; border-radius: 50%; animation: pulse 1.5s infinite;"></div>
-                        <div style="width: 8px; height: 8px; background: #764ba2; border-radius: 50%; animation: pulse 1.5s infinite 0.2s;"></div>
-                        <div style="width: 8px; height: 8px; background: #667eea; border-radius: 50%; animation: pulse 1.5s infinite 0.4s;"></div>
-                    </div>
-                </div>
-            </div>
-            <style>
-            @keyframes pulse {
-                0%, 60%, 100% { transform: scale(0.8); opacity: 0.5; }
-                30% { transform: scale(1.2); opacity: 1; }
-            }
-            </style>
-            """, unsafe_allow_html=True)
+            # Show processing animation
+            st.markdown(show_processing_animation(), unsafe_allow_html=True)
             
             response = st.session_state.chain.invoke({"input": prompt})
                 
