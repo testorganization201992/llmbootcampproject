@@ -1,8 +1,11 @@
 import os
 import streamlit as st
 import utils
+import sys
+sys.path.append('..')
+from themes.modern_theme import apply_modern_theme, show_processing_animation
 
-from typing import List, TypedDict, Literal, Optional
+from typing import List, TypedDict, Literal
 from langchain_core.documents import Document
 
 from langchain_openai import ChatOpenAI
@@ -17,9 +20,15 @@ from langgraph.graph import StateGraph, END
 # --------------------------
 # Page config
 # --------------------------
-st.set_page_config(page_title="ChatPDF (Simple Agentic RAG)", page_icon="📄")
-st.header("Chat with your Documents — Simple Agentic RAG")
-st.write("Decides between summarization or specific fact answering, then retrieves and generates accordingly.")
+st.set_page_config(
+    page_title="Chat with Documents", 
+    page_icon="📄",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# Apply modern theme
+apply_modern_theme()
 
 # --------------------------
 # Utilities
@@ -152,6 +161,36 @@ class CustomDataChatbot:
         llm = ChatOpenAI(model=self.openai_model, temperature=0, streaming=False)
         return build_simple_agentic_rag(retriever, llm)
     
+    def display_messages(self):
+        """Display chat messages with modern styling."""
+        if not st.session_state.messages:
+            st.markdown("""
+            <div class="welcome-screen">
+                <div class="welcome-icon">📄</div>
+                <h3>Chat with Your Documents</h3>
+                <p>Upload PDF files and ask questions about their content!</p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="messages-area">', unsafe_allow_html=True)
+            for message in st.session_state.messages:
+                role = message["role"]
+                content = message["content"]
+                
+                if role == "user":
+                    st.markdown(f"""
+                    <div class="chat-message user">
+                        <div class="message-bubble user">{content}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div class="chat-message assistant">
+                        <div class="message-bubble assistant">{content}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
     @utils.enable_chat_history
     def main(self):
         if "uploaded_files" not in st.session_state:
@@ -159,37 +198,67 @@ class CustomDataChatbot:
         if "rag_app" not in st.session_state:
             st.session_state.rag_app = None
 
-        uploaded_files = st.sidebar.file_uploader(
-            label="Upload PDF files",
-            type=["pdf"],
-            accept_multiple_files=True
-        )
+        # Sidebar configuration
+        with st.sidebar:
+            st.markdown("### 📁 Document Upload")
+            uploaded_files = st.file_uploader(
+                label="Upload PDF files",
+                type=["pdf"],
+                accept_multiple_files=True
+            )
+            
+            if uploaded_files:
+                st.success(f"✅ {len(uploaded_files)} file(s) uploaded")
+            
+            st.markdown("---")
+            st.markdown("### 🚀 Features")
+            st.markdown("• PDF Document Processing")
+            st.markdown("• Agentic RAG Pipeline")
+            st.markdown("• Intelligent Question Routing")
+            st.markdown("• Context-Aware Responses")
 
         if uploaded_files:
             current = {f.name for f in uploaded_files}
             prev = {f.name for f in st.session_state.get("uploaded_files", [])}
             if current != prev or st.session_state.rag_app is None:
                 st.session_state.uploaded_files = uploaded_files
-                with st.spinner("Indexing and preparing…"):
+                with st.spinner("📚 Processing documents..."):
                     st.session_state.rag_app = self.setup_graph(uploaded_files)
         else:
-            st.error("Please upload PDF documents to continue!")
-            st.stop()
-
-        user_query = st.chat_input(placeholder="Ask for a summary or a specific fact…")
-        if not user_query:
+            # Show welcome screen when no documents uploaded
+            if not st.session_state.messages:
+                self.display_messages()
             return
 
-        st.chat_message("user").write(user_query)
-        with st.chat_message("assistant"):
+        # Initialize messages
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
+            
+        # Display messages
+        self.display_messages()
+
+        # Chat input
+        if user_query := st.chat_input("Ask about your documents..."):
+            # Add user message
+            st.session_state.messages.append({"role": "user", "content": user_query})
+            
+            # Generate response
             try:
+                # Show processing animation
+                st.markdown(show_processing_animation(), unsafe_allow_html=True)
+                
                 result = st.session_state.rag_app.invoke(
                     {"question": user_query, "mode": "fact", "documents": [], "generation": ""}
                 )
                 answer = result.get("generation", "").strip() or "I couldn't find enough information in the documents to answer that."
-                st.write(answer)
+                
+                # Add assistant response
+                st.session_state.messages.append({"role": "assistant", "content": answer})
+                
+                st.rerun()
+                
             except Exception as e:
-                st.error(f"Error: {e}")
+                st.error(f"Error: {str(e)}")
 
 # --------------------------
 # Run

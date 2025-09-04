@@ -6,7 +6,6 @@ for OpenAI and Bing services.
 """
 
 import os
-import random
 import streamlit as st
 from PIL import Image
 
@@ -52,8 +51,6 @@ def display_msg(msg, author):
 
 
 def configure_openai_api_key():
-
-    # st.sidebar.image("DSD logo.png", width=300)
     # Open the image
     image = Image.open("DSD logo.png")
 
