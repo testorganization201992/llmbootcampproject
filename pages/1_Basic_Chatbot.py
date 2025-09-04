@@ -20,6 +20,15 @@ def setup_page():
         initial_sidebar_state="collapsed"
     )
     
+    # Hide sidebar completely
+    st.markdown("""
+    <style>
+        .stSidebar {
+            display: none !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Apply modern theme
     apply_modern_theme()
 
@@ -44,9 +53,16 @@ def configure_api_key():
     api_key = os.environ.get("OPENAI_API_KEY") or st.session_state.get("OPENAI_API_KEY", "")
     
     if not api_key:
-        # Simple API key input in sidebar instead of modal
-        with st.sidebar:
-            st.markdown("### 🔑 API Key")
+        # Show API key input in main area since sidebar is hidden
+        st.markdown("""
+        <div style="position: fixed; top: 20px; right: 20px; z-index: 999; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 10px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <h4>🔑 API Key Required</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("### 🔑 Enter API Key")
             api_key_input = st.text_input(
                 "OpenAI API Key",
                 type="password",
@@ -117,29 +133,65 @@ def main():
         """, unsafe_allow_html=True)
         return
     
-    # Sidebar configuration
-    with st.sidebar:
-        st.markdown("### ⚙️ Settings")
-        
-        model = st.selectbox(
-            "Model",
-            ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"],
-            index=0
-        )
-        
-        temperature = st.slider("Temperature", 0.0, 2.0, 0.7, 0.1)
-        max_tokens = st.number_input("Max Tokens", 100, 4000, 1500, 100)
-        
-        if st.button("🗑️ Clear Chat", use_container_width=True):
-            st.session_state.messages = []
-            st.rerun()
-        
-        st.markdown("---")
-        st.markdown("### 🚀 Features")
-        st.markdown("• Modern UI Design")
-        st.markdown("• Real-time Responses") 
-        st.markdown("• Multiple AI Models")
-        st.markdown("• Customizable Settings")
+    # Settings panel toggle
+    if "show_settings" not in st.session_state:
+        st.session_state.show_settings = False
+    
+    # Initialize default settings
+    if "model_config" not in st.session_state:
+        st.session_state.model_config = {
+            "model": "gpt-4o-mini",
+            "temperature": 0.7,
+            "max_tokens": 1500
+        }
+    
+    # Settings panel container (will be populated with Streamlit components)
+    settings_col1, settings_col2, settings_col3 = st.columns([3, 1, 1])
+    
+    with settings_col3:
+        if st.button("⚙️", key="settings_toggle", help="Settings"):
+            st.session_state.show_settings = not st.session_state.show_settings
+    
+    # Settings panel
+    if st.session_state.show_settings:
+        with st.container():
+            st.markdown("""
+            <div style="position: fixed; top: 80px; right: 20px; width: 300px; background: rgba(255,255,255,0.95); padding: 20px; border-radius: 15px; backdrop-filter: blur(15px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); z-index: 998;">
+                <h4>⚙️ Settings</h4>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Create a form for settings to avoid constant reruns
+            with st.form("settings_form"):
+                st.markdown("### Model Configuration")
+                model = st.selectbox(
+                    "Model",
+                    ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"],
+                    index=["gpt-4o-mini", "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"].index(st.session_state.model_config["model"])
+                )
+                
+                temperature = st.slider("Temperature", 0.0, 2.0, st.session_state.model_config["temperature"], 0.1)
+                max_tokens = st.number_input("Max Tokens", 100, 4000, st.session_state.model_config["max_tokens"], 100)
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.form_submit_button("Apply Settings", type="primary"):
+                        st.session_state.model_config = {
+                            "model": model,
+                            "temperature": temperature,
+                            "max_tokens": max_tokens
+                        }
+                        st.rerun()
+                
+                with col2:
+                    if st.form_submit_button("🗑️ Clear Chat"):
+                        st.session_state.messages = []
+                        st.rerun()
+    
+    # Get current model configuration
+    model = st.session_state.model_config["model"]
+    temperature = st.session_state.model_config["temperature"]  
+    max_tokens = st.session_state.model_config["max_tokens"]
     
     # Build chain
     config = {
