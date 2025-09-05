@@ -1,4 +1,6 @@
 import streamlit as st
+import os
+import glob
 
 st.set_page_config(
     page_title="LLM Bootcamp Project",
@@ -7,202 +9,89 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for sleek home page
 st.markdown("""
-<style>
-/* Hero section */
-.hero-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 3rem 2rem;
-    border-radius: 20px;
-    text-align: center;
-    color: white;
-    margin-bottom: 3rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-/* Feature cards */
-.feature-card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 15px;
-    padding: 2rem;
-    margin: 1rem 0;
-    border-left: 4px solid;
-    backdrop-filter: blur(10px);
-    transition: transform 0.3s ease;
-}
-
-.feature-card:hover {
-    transform: translateY(-5px);
-}
-
-.basic-card { border-left-color: #FF6B6B; }
-.agent-card { border-left-color: #4ECDC4; }
-.rag-card { border-left-color: #45B7D1; }
-
-/* Tech stack */
-.tech-stack {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 15px;
-    padding: 2rem;
-    margin: 2rem 0;
-    text-align: center;
-}
-
-/* Hide Streamlit elements */
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-</style>
-""", unsafe_allow_html=True)
-
-# Hero Section
-st.markdown("""
-<div class="hero-section">
-    <h1>🤖 LLM Bootcamp Project</h1>
-    <h3>Advanced Chatbot Implementations</h3>
-    <p style="font-size: 1.2em; opacity: 0.9;">
-        Powered by OpenAI & LangChain with sleek Streamlit interfaces
-    </p>
+<div style="text-align: center; margin: 2rem 0;">
+    <h1 style="font-size: 3rem; margin-bottom: 1rem;">🤖 LLM Bootcamp Project</h1>
 </div>
 """, unsafe_allow_html=True)
 
-# Features Overview - Staggered Card Layout
-col1, col2 = st.columns([1, 1])
+st.markdown("### Available AI Assistants:")
 
-with col1:
-    # Basic Chatbot - Full width
-    st.markdown("""
-    <div class="feature-card basic-card" style="margin-bottom: 2rem;">
-        <h3>💬 Basic Chatbot</h3>
-        <p>Stateless conversations with no memory between messages. Perfect for quick questions and independent interactions.</p>
-        <div style="display: flex; gap: 2rem; margin-top: 1rem;">
-            <div>
-                <strong>Features:</strong>
-                <ul style="margin: 0.5rem 0;">
-                    <li>Multiple OpenAI models</li>
-                    <li>Real-time streaming</li>
-                </ul>
-            </div>
-            <div>
-                <strong>Specs:</strong>
-                <ul style="margin: 0.5rem 0;">
-                    <li>No conversation memory</li>
-                    <li>Configurable temperature</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+# Automatically discover pages
+pages_dir = "pages"
+if os.path.exists(pages_dir):
+    page_files = glob.glob(f"{pages_dir}/*.py")
+    page_files.sort()
     
-    # Document Chat - Offset
-    st.markdown("""
-    <div class="feature-card rag-card" style="margin-top: 2rem;">
-        <h3>📄 Document Chat</h3>
-        <p>RAG-powered chatbot that can understand and answer questions about your uploaded PDF documents.</p>
-        <div style="display: flex; gap: 2rem; margin-top: 1rem;">
-            <div>
-                <strong>Capabilities:</strong>
-                <ul style="margin: 0.5rem 0;">
-                    <li>PDF document processing</li>
-                    <li>FAISS vector search</li>
-                </ul>
-            </div>
-            <div>
-                <strong>AI:</strong>
-                <ul style="margin: 0.5rem 0;">
-                    <li>Agentic RAG pipeline</li>
-                    <li>Context-aware responses</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col2:
-    # Agent Chatbot - Centered with offset
-    st.markdown("""
-    <div class="feature-card agent-card" style="margin-top: 1rem; margin-bottom: 3rem;">
-        <h3>🌐 Agent Chatbot</h3>
-        <p>Internet-enabled chatbot with web search capabilities using Tavily integration for real-time information.</p>
-        <div style="display: flex; gap: 2rem; margin-top: 1rem;">
-            <div>
-                <strong>Integration:</strong>
-                <ul style="margin: 0.5rem 0;">
-                    <li>Web search integration</li>
-                    <li>LangGraph workflows</li>
-                </ul>
-            </div>
-            <div>
-                <strong>Intelligence:</strong>
-                <ul style="margin: 0.5rem 0;">
-                    <li>Real-time data access</li>
-                    <li>Agent-based reasoning</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    def extract_page_info(file_path):
+        """Extract title and description from file docstring or comments"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                
+            # Look for docstring at top of file
+            if '"""' in content:
+                start = content.find('"""')
+                end = content.find('"""', start + 3)
+                if start != -1 and end != -1:
+                    docstring = content[start+3:end].strip()
+                    lines = docstring.split('\n')
+                    title = lines[0].strip() if lines else ""
+                    description = lines[1].strip() if len(lines) > 1 else ""
+                    return title, description
+        except:
+            pass
+        
+        # Fallback: generate from filename
+        base_name = os.path.basename(file_path)
+        clean_name = base_name.replace('.py', '').replace('_', ' ')
+        # Remove leading numbers like "1_"
+        if clean_name[0].isdigit() and '_' in clean_name:
+            clean_name = clean_name.split('_', 1)[1]
+        title = clean_name.title()
+        return title, "AI assistant page"
     
-    # Stats/Metrics section
-    st.markdown("""
-    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 1.5rem; text-align: center; margin-top: 1rem;">
-        <h4>⚡ Performance Metrics</h4>
-        <div style="display: flex; justify-content: space-around; margin-top: 1rem;">
-            <div>
-                <h2 style="color: #FF6B6B; margin: 0;">3</h2>
-                <p style="margin: 0; opacity: 0.8;">Chatbot Types</p>
-            </div>
-            <div>
-                <h2 style="color: #4ECDC4; margin: 0;">6+</h2>
-                <p style="margin: 0; opacity: 0.8;">AI Models</p>
-            </div>
-            <div>
-                <h2 style="color: #45B7D1; margin: 0;">∞</h2>
-                <p style="margin: 0; opacity: 0.8;">Possibilities</p>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Tech Stack
-st.markdown("""
-<div class="tech-stack">
-    <h3>🛠️ Technology Stack</h3>
-    <p>
-        <strong>LangChain</strong> • <strong>OpenAI GPT Models</strong> • <strong>LangGraph</strong> • 
-        <strong>Streamlit</strong> • <strong>FAISS</strong> • <strong>Tavily Search</strong>
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
-# Getting Started
-st.markdown("""
-<div style="text-align: center; margin: 3rem 0;">
-    <h3>🚀 Get Started</h3>
-    <p style="font-size: 1.1em;">
-        Navigate to any chatbot page using the sidebar to start exploring different AI conversation patterns.
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
-# Sidebar navigation
-with st.sidebar:
-    st.markdown("### 🧭 Navigation")
-    st.markdown("""
-    **Available Chatbots:**
-    - 💬 **Basic Chatbot** - Clean, minimalist interface with advanced controls
-    - 🌐 **Agent Chatbot** - Web-enabled with search capabilities
-    - 📄 **Document Chat** - PDF Q&A with RAG technology
-    """)
+    def get_page_info(filename):
+        """Get specific page info based on filename"""
+        filename_lower = filename.lower()
+        
+        if '1_basic' in filename_lower:
+            return "💬", "Basic AI Chat", "Simple AI conversation"
+        elif '2_chatbot_agent' in filename_lower:
+            return "🔍", "Search Enabled Chat", "AI with internet search capabilities"
+        elif '3_chat_with_your_data' in filename_lower:
+            return "📚", "RAG", "Retrieval-Augmented Generation with documents"
+        elif '4_mcp_agent' in filename_lower:
+            return "🔧", "MCP Chatbot", "Model Context Protocol integration"
+        else:
+            # Fallback for any other files
+            clean_name = filename.replace('.py', '').replace('_', ' ').title()
+            return "🤖", clean_name, "AI assistant page"
     
+    # Create columns based on number of pages
+    num_pages = len(page_files)
+    cols = st.columns(num_pages)
+    
+    for i, page_file in enumerate(page_files):
+        page_name = os.path.basename(page_file)
+        
+        with cols[i]:
+            # Get page info based on filename
+            icon, title, description = get_page_info(page_name)
+            button_text = f"{icon} {title}"
+            
+            if st.button(button_text, key=page_name, use_container_width=True):
+                st.switch_page(page_file)
+
     st.markdown("---")
-    st.markdown("### 🎯 Quick Tips")
-    st.markdown("""
-    - **Basic Chatbot** - Clean design with full parameter control
-    - **Agent Chatbot** - Current events and web information
-    - **Document Chat** - Upload and chat with your PDF files
-    """)
     
-    st.markdown("---")
-    st.success("✅ All systems operational")
+    # Auto-generate descriptions
+    st.markdown("**Available Features:**")
+    for page_file in page_files:
+        page_name = os.path.basename(page_file)
+        icon, title, description = get_page_info(page_name)
+        st.markdown(f"- **{title}** - {description}")
+
+else:
+    st.error("Pages directory not found!")
+    st.markdown("Available pages will be automatically discovered when the pages/ directory exists.")

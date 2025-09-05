@@ -76,6 +76,25 @@ def apply_theme():
 # Apply theme before any UI elements
 apply_theme()
 
+# Home button at the top
+col1, col2 = st.columns([1, 10])
+with col1:
+    st.markdown("""
+        <button onclick="window.location.href='/'" style="
+            background-color: #FF4B4B;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        ">🏠 Home</button>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.title("MCP Theme Chatbot")
+
 # Sidebar for settings
 with st.sidebar:
     st.subheader("Settings")
