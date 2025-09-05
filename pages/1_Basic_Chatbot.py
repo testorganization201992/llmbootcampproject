@@ -110,9 +110,8 @@ def main():
             
             if st.button("Connect", type="primary", use_container_width=True):
                 if api_key_input and api_key_input.startswith("sk-"):
-                    st.session_state["OPENAI_API_KEY"] = api_key_input
-                    os.environ["OPENAI_API_KEY"] = api_key_input
-                    st.session_state["api_key_just_connected"] = True
+                    st.session_state["basic_openai_key"] = api_key_input
+                    st.session_state["basic_api_key_connected"] = True
                     st.rerun()
                 else:
                     st.error("❌ Invalid key format")
@@ -122,28 +121,23 @@ def main():
 
 def display_messages():
     """Display chat messages using pure Streamlit components."""
-    if not st.session_state.messages:
+    if not st.session_state.basic_messages:
         st.info("🤖 Ask me anything and I'll be happy to help!")
     else:
-        for message in st.session_state.messages:
+        for message in st.session_state.basic_messages:
             if message["role"] == "user":
                 with st.chat_message("user"):
                     st.write(message["content"])
             else:
                 with st.chat_message("assistant"):
                     st.write(message["content"])
-    
-    # Show thinking animation if processing
-    if st.session_state.get("processing", False):
-        with st.chat_message("assistant"):
-            st.write("🤔 Thinking...")
 
 def main():
     """Main application function."""
     setup_page()
     
     # Page title - centered
-    st.markdown("<h1 style='text-align: center;'>🤖 Basic Chatbot</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; margin-top: -75px;'>🤖 Basic Chatbot</h1>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
     
     # Check API key - Show login screen
@@ -161,53 +155,48 @@ def main():
             "max_tokens": 2000
         }
         
-        if "chain" not in st.session_state:
-            st.session_state.chain = build_chain(config)
+        if "basic_chain" not in st.session_state:
+            st.session_state.basic_chain = build_chain(config)
         
-        # Initialize messages
-        if "messages" not in st.session_state:
-            st.session_state.messages = []
+        # Initialize messages with unique key
+        if "basic_messages" not in st.session_state:
+            st.session_state.basic_messages = []
         
-        # Create stable messages container
-        messages_container = st.container()
-        with messages_container:
-            display_messages()
+        # Display messages
+        display_messages()
         
-        # Check if we need to generate a response (last message is from user)
-        if (st.session_state.messages and 
-            st.session_state.messages[-1]["role"] == "user" and
-            not st.session_state.get("processing", False)):
+        # Generate response if needed
+        if (st.session_state.basic_messages and 
+            st.session_state.basic_messages[-1]["role"] == "user" and
+            not st.session_state.get("basic_processing", False)):
             
-            # Set processing flag and rerun to show thinking animation
-            st.session_state.processing = True
-            st.rerun()
-        
-        # Generate response if processing
-        if st.session_state.get("processing", False):
+            st.session_state.basic_processing = True
             try:
-                # Get the last user message
-                user_input = st.session_state.messages[-1]["content"]
-                response = st.session_state.chain.invoke({"input": user_input})
-                    
-                # Add assistant response
-                st.session_state.messages.append({
-                    "role": "assistant", 
-                    "content": response.content
-                })
+                # Show processing indicator
+                with st.chat_message("assistant"):
+                    with st.spinner("Thinking..."):
+                        # Get the last user message
+                        user_input = st.session_state.basic_messages[-1]["content"]
+                        response = st.session_state.basic_chain.invoke({"input": user_input})
+                        
+                        # Add assistant response
+                        st.session_state.basic_messages.append({
+                            "role": "assistant", 
+                            "content": response.content
+                        })
                 
-                # Clear processing flag and rerun to show response
-                st.session_state.processing = False
+                st.session_state.basic_processing = False
                 st.rerun()
                 
             except Exception as e:
-                st.session_state.processing = False
+                st.session_state.basic_processing = False
                 st.error(f"Error: {str(e)}")
                 st.rerun()
 
     # Chat input - outside container to prevent shifting
     if prompt := st.chat_input("Type your message here..."):
         # Add user message and rerun to show it first
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.session_state.basic_messages.append({"role": "user", "content": prompt})
         st.rerun()
 
 if __name__ == "__main__":

@@ -27,7 +27,7 @@ class ChatbotTools:
         tavily_search = TavilySearch(
             max_results=5,
             topic="general",
-            tavily_api_key=st.session_state["TAVILY_API_KEY"],
+            tavily_api_key=st.session_state["agent_tavily_key"],
         )
 
         # old: tools = [tavily_search]
@@ -54,92 +54,80 @@ class ChatbotTools:
     
     def display_messages(self):
         """Display chat messages using pure Streamlit components."""
-        if not st.session_state.messages:
+        if not st.session_state.agent_messages:
             st.info("🌐 Ask me anything and I'll search the web for real-time information!")
         else:
-            for message in st.session_state.messages:
+            for message in st.session_state.agent_messages:
                 if message["role"] == "user":
                     with st.chat_message("user"):
                         st.write(message["content"])
                 else:
                     with st.chat_message("assistant"):
                         st.write(message["content"])
-        
-        # Show thinking animation if processing
-        if st.session_state.get("processing", False):
-            with st.chat_message("assistant"):
-                st.write("🤔 Searching the web...")
 
     def main(self):
-        # Initialize messages
-        if "messages" not in st.session_state:
-            st.session_state.messages = []
+        # Initialize messages with unique key
+        if "agent_messages" not in st.session_state:
+            st.session_state.agent_messages = []
             
         # Setup agent
         agent = self.setup_agent()
         
-        # Main chat container
-        with st.container():
-            # Create stable messages container
-            messages_container = st.container()
-            with messages_container:
-                self.display_messages()
+        # Display messages
+        self.display_messages()
+        
+        # Generate response if needed
+        if (st.session_state.agent_messages and 
+            st.session_state.agent_messages[-1]["role"] == "user" and
+            not st.session_state.get("agent_processing", False)):
             
-            # Check if we need to generate a response
-            if (st.session_state.messages and 
-                st.session_state.messages[-1]["role"] == "user" and
-                not st.session_state.get("processing", False)):
+            st.session_state.agent_processing = True
+            try:
+                # Show processing indicator
+                with st.chat_message("assistant"):
+                    with st.spinner("Searching the web..."):
+                        # Get the last user message
+                        user_query = st.session_state.agent_messages[-1]["content"]
+                        
+                        acc = ""
+                        # Stream state updates (chunked by reasoning/tool steps)
+                        for update in agent.stream({"messages": user_query}):
+                            msgs = update.get("messages", [])
+                            for m in msgs:
+                                content = getattr(m, "content", "")
+                                if not content and isinstance(getattr(m, "content", None), list):
+                                    content = "".join(
+                                        c.get("text", "")
+                                        for c in m.content
+                                        if isinstance(c, dict) and c.get("type") == "text"
+                                    )
+                                if content:
+                                    acc += content
+
+                        # Fallback if nothing streamed
+                        if not acc:
+                            resp = agent.invoke({"messages": user_query})
+                            acc = (
+                                resp["messages"][-1].content
+                                if isinstance(resp, dict) and resp.get("messages")
+                                else str(resp)
+                            )
+
+                        # Add assistant response
+                        st.session_state.agent_messages.append({"role": "assistant", "content": acc})
                 
-                # Set processing flag and rerun to show thinking animation
-                st.session_state.processing = True
+                st.session_state.agent_processing = False
                 st.rerun()
-            
-            # Generate response if processing
-            if st.session_state.get("processing", False):
-                try:
-                    # Get the last user message
-                    user_query = st.session_state.messages[-1]["content"]
-                    
-                    acc = ""
-                    # Stream state updates (chunked by reasoning/tool steps)
-                    for update in agent.stream({"messages": user_query}):
-                        msgs = update.get("messages", [])
-                        for m in msgs:
-                            content = getattr(m, "content", "")
-                            if not content and isinstance(getattr(m, "content", None), list):
-                                content = "".join(
-                                    c.get("text", "")
-                                    for c in m.content
-                                    if isinstance(c, dict) and c.get("type") == "text"
-                                )
-                            if content:
-                                acc += content
-
-                    # Fallback if nothing streamed
-                    if not acc:
-                        resp = agent.invoke({"messages": user_query})
-                        acc = (
-                            resp["messages"][-1].content
-                            if isinstance(resp, dict) and resp.get("messages")
-                            else str(resp)
-                        )
-
-                    # Add assistant response
-                    st.session_state.messages.append({"role": "assistant", "content": acc})
-                    
-                    # Clear processing flag and rerun to show response
-                    st.session_state.processing = False
-                    st.rerun()
-                    
-                except Exception as e:
-                    st.session_state.processing = False
-                    st.error(f"Error: {str(e)}")
-                    st.rerun()
+                
+            except Exception as e:
+                st.session_state.agent_processing = False
+                st.error(f"Error: {str(e)}")
+                st.rerun()
         
         # Chat input - outside container to prevent shifting
         if prompt := st.chat_input("Ask me anything about current events..."):
             # Add user message and rerun to show it first
-            st.session_state.messages.append({"role": "user", "content": prompt})
+            st.session_state.agent_messages.append({"role": "user", "content": prompt})
             st.rerun()
 
 
@@ -148,7 +136,7 @@ def main():
     setup_page()
     
     # Page title - centered
-    st.markdown("<h1 style='text-align: center;'>🌐 Chatbot Agent</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; margin-top: -75px;'>🌐 Chatbot Agent</h1>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
     
     # Check API keys - Show login screen

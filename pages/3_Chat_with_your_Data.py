@@ -1,10 +1,5 @@
 import os
 import streamlit as st
-import utils
-import sys
-sys.path.append('..')
-from themes.modern_theme import apply_modern_theme, show_processing_animation
-
 from typing import List, TypedDict, Literal
 from langchain_core.documents import Document
 
@@ -20,15 +15,62 @@ from langgraph.graph import StateGraph, END
 # --------------------------
 # Page config
 # --------------------------
-st.set_page_config(
-    page_title="Chat with Documents", 
-    page_icon="📄",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+def setup_page():
+    """Set up the page with basic config."""
+    st.set_page_config(
+        page_title="Chat with Documents", 
+        page_icon="📄",
+        layout="wide",
+        initial_sidebar_state="collapsed"
+    )
+    
+    # Force light theme
+    st.markdown("""
+    <style>
+        .stApp {
+            background-color: #ffffff !important;
+            color: #262730 !important;
+        }
+        .stApp > div {
+            background-color: #ffffff !important;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #f0f2f6 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
-# Apply modern theme
-apply_modern_theme()
+def configure_api_key():
+    """Configure OpenAI API key."""
+    api_key = st.session_state.get("rag_openai_key", "")
+    
+    if not api_key:
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("### 🔑 Enter API Key")
+            
+            # Check if we just connected (avoid showing form again)
+            if st.session_state.get("rag_key_connected", False):
+                st.session_state["rag_key_connected"] = False
+                return True
+                
+            api_key_input = st.text_input(
+                "OpenAI API Key",
+                type="password",
+                placeholder="sk-proj-...",
+                key="rag_api_key_input"
+            )
+            
+            if st.button("Connect", type="primary", use_container_width=True):
+                if api_key_input and api_key_input.startswith("sk-"):
+                    st.session_state["rag_openai_key"] = api_key_input
+                    st.session_state["rag_key_connected"] = True
+                    st.rerun()
+                else:
+                    st.error("❌ Invalid key format")
+        return False
+    
+    return True
 
 # --------------------------
 # Utilities
@@ -42,7 +84,7 @@ def save_file(file, folder="tmp") -> str:
 
 def build_vectorstore(files) -> FAISS:
     docs: List[Document] = []
-    progress_bar = st.sidebar.progress(0, text=f"Processing {len(files)} files...")
+    progress_bar = st.progress(0, text=f"Processing {len(files)} files...")
 
     for idx, file in enumerate(files):
         path = save_file(file)
@@ -50,11 +92,16 @@ def build_vectorstore(files) -> FAISS:
         docs.extend(loader.load())
         progress_bar.progress((idx + 1) / len(files), text=f"Processed {idx+1}/{len(files)}")
 
+    progress_bar.progress(100, text="Building vector store...")
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
     chunks = text_splitter.split_documents(docs)
 
     embeddings = OpenAIEmbeddings()
     vectordb = FAISS.from_documents(chunks, embeddings)
+    
+    # Remove the progress bar after completion
+    progress_bar.empty()
+    
     return vectordb
 
 # --------------------------
@@ -152,7 +199,6 @@ def build_simple_agentic_rag(retriever, llm: ChatOpenAI):
 # --------------------------
 class CustomDataChatbot:
     def __init__(self):
-        utils.configure_openai_api_key()
         self.openai_model = "gpt-4o-mini"
 
     def setup_graph(self, uploaded_files):
@@ -162,107 +208,107 @@ class CustomDataChatbot:
         return build_simple_agentic_rag(retriever, llm)
     
     def display_messages(self):
-        """Display chat messages with modern styling."""
-        if not st.session_state.messages:
-            st.markdown("""
-            <div class="welcome-screen">
-                <div class="welcome-icon">📄</div>
-                <h3>Chat with Your Documents</h3>
-                <p>Upload PDF files and ask questions about their content!</p>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown('<div class="messages-area">', unsafe_allow_html=True)
-            for message in st.session_state.messages:
-                role = message["role"]
-                content = message["content"]
-                
-                if role == "user":
-                    st.markdown(f"""
-                    <div class="chat-message user">
-                        <div class="message-bubble user">{content}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+        """Display chat messages using pure Streamlit components."""
+        if st.session_state.rag_messages:
+            for message in st.session_state.rag_messages:
+                if message["role"] == "user":
+                    with st.chat_message("user"):
+                        st.write(message["content"])
                 else:
-                    st.markdown(f"""
-                    <div class="chat-message assistant">
-                        <div class="message-bubble assistant">{content}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+                    with st.chat_message("assistant"):
+                        st.write(message["content"])
 
-    @utils.enable_chat_history
     def main(self):
-        if "uploaded_files" not in st.session_state:
-            st.session_state.uploaded_files = []
+        # Initialize session state with unique keys
+        if "rag_uploaded_files" not in st.session_state:
+            st.session_state.rag_uploaded_files = []
         if "rag_app" not in st.session_state:
             st.session_state.rag_app = None
+        if "rag_messages" not in st.session_state:
+            st.session_state.rag_messages = []
 
-        # Sidebar configuration
-        with st.sidebar:
-            st.markdown("### 📁 Document Upload")
+        # Document upload section - centered
+        col1, col2, col3 = st.columns([2, 1.5, 2])
+        with col2:
             uploaded_files = st.file_uploader(
-                label="Upload PDF files",
+                label="**Upload PDF files to chat with your documents**",
                 type=["pdf"],
                 accept_multiple_files=True
             )
             
-            if uploaded_files:
-                st.success(f"✅ {len(uploaded_files)} file(s) uploaded")
-            
-            st.markdown("---")
-            st.markdown("### 🚀 Features")
-            st.markdown("• PDF Document Processing")
-            st.markdown("• Agentic RAG Pipeline")
-            st.markdown("• Intelligent Question Routing")
-            st.markdown("• Context-Aware Responses")
+            # Files are handled automatically - no need for success message
+                
+        st.markdown("<br>", unsafe_allow_html=True)
 
         if uploaded_files:
             current = {f.name for f in uploaded_files}
-            prev = {f.name for f in st.session_state.get("uploaded_files", [])}
+            prev = {f.name for f in st.session_state.get("rag_uploaded_files", [])}
             if current != prev or st.session_state.rag_app is None:
-                st.session_state.uploaded_files = uploaded_files
+                st.session_state.rag_uploaded_files = uploaded_files
                 with st.spinner("📚 Processing documents..."):
                     st.session_state.rag_app = self.setup_graph(uploaded_files)
         else:
             # Show welcome screen when no documents uploaded
-            if not st.session_state.messages:
+            if not st.session_state.rag_messages:
                 self.display_messages()
             return
-
-        # Initialize messages
-        if "messages" not in st.session_state:
-            st.session_state.messages = []
             
         # Display messages
         self.display_messages()
-
-        # Chat input
-        if user_query := st.chat_input("Ask about your documents..."):
-            # Add user message
-            st.session_state.messages.append({"role": "user", "content": user_query})
+        
+        # Generate response if needed
+        if (st.session_state.rag_messages and 
+            st.session_state.rag_messages[-1]["role"] == "user" and
+            not st.session_state.get("rag_processing", False)):
             
-            # Generate response
+            st.session_state.rag_processing = True
             try:
-                # Show processing animation
-                st.markdown(show_processing_animation(), unsafe_allow_html=True)
+                # Show processing indicator
+                with st.chat_message("assistant"):
+                    with st.spinner("Analyzing documents..."):
+                        # Get the last user message
+                        user_query = st.session_state.rag_messages[-1]["content"]
+                        
+                        result = st.session_state.rag_app.invoke(
+                            {"question": user_query, "mode": "fact", "documents": [], "generation": ""}
+                        )
+                        answer = result.get("generation", "").strip() or "I couldn't find enough information in the documents to answer that."
+                        
+                        # Add assistant response
+                        st.session_state.rag_messages.append({"role": "assistant", "content": answer})
                 
-                result = st.session_state.rag_app.invoke(
-                    {"question": user_query, "mode": "fact", "documents": [], "generation": ""}
-                )
-                answer = result.get("generation", "").strip() or "I couldn't find enough information in the documents to answer that."
-                
-                # Add assistant response
-                st.session_state.messages.append({"role": "assistant", "content": answer})
-                
+                st.session_state.rag_processing = False
                 st.rerun()
                 
             except Exception as e:
+                st.session_state.rag_processing = False
                 st.error(f"Error: {str(e)}")
+                st.rerun()
+
+        # Chat input - outside container to prevent shifting
+        if prompt := st.chat_input("Ask about your documents..."):
+            # Add user message and rerun to show it first
+            st.session_state.rag_messages.append({"role": "user", "content": prompt})
+            st.rerun()
+
+def main():
+    """Main application function."""
+    setup_page()
+    
+    # Page title - centered
+    st.markdown("<h1 style='text-align: center; margin-top: -75px;'>📄 Chat with your Data</h1>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Check API key - Show login screen
+    if not configure_api_key():
+        return
+    
+    # Run chatbot
+    app = CustomDataChatbot()
+    app.main()
 
 # --------------------------
 # Run
 # --------------------------
 if __name__ == "__main__":
-    app = CustomDataChatbot()
-    app.main()
+    main()

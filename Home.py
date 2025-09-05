@@ -9,6 +9,22 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Force light theme
+st.markdown("""
+<style>
+    .stApp {
+        background-color: #ffffff !important;
+        color: #262730 !important;
+    }
+    .stApp > div {
+        background-color: #ffffff !important;
+    }
+    [data-testid="stSidebar"] {
+        background-color: #f0f2f6 !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 st.markdown("""
 <div style="text-align: center; margin: 2rem 0;">
     <h1 style="font-size: 3rem; margin-bottom: 1rem;">🤖 LLM Bootcamp Project</h1>

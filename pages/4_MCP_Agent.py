@@ -1,252 +1,185 @@
 """
 MCP Agent Chatbot
-Demonstrates Model Context Protocol (MCP) integration with dynamic theme switching.
-Uses MCP server to provide enhanced capabilities beyond standard LLM functionality.
+Demonstrates Model Context Protocol (MCP) integration for enhanced AI capabilities.
+Uses MCP server to provide tools and resources beyond standard LLM functionality.
 """
 
 import streamlit as st
-import utils
-import json
-import asyncio
-import sys
 import os
+import asyncio
 from pathlib import Path
+from agent_service import get_agent
 
-sys.path.append('..')
-from themes.modern_theme import apply_modern_theme, show_processing_animation
-
-# Add the MCP directory to Python path
-mcp_path = Path(__file__).parent.parent / "3_agentic_automation_with_mcp"
-sys.path.insert(0, str(mcp_path))
-
-try:
-    from agent_service import get_agent
-except ImportError:
-    st.error("MCP agent_service not found. Please ensure the MCP components are available.")
-    st.stop()
-
-st.set_page_config(
-    page_title="MCP Agent",
-    page_icon="🔧",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
-# Apply modern theme
-apply_modern_theme()
-
-# Configuration
-STATE_FILE = mcp_path / "theme_state.json"
-
-# Define theme configurations  
-THEMES = {
-    "light": {
-        "primary": "#667eea",
-        "bg": "#ffffff",
-        "secondary_bg": "#f8fafc",
-        "text": "#2d3748"
-    },
-    "dark": {
-        "primary": "#667eea", 
-        "bg": "#1a202c",
-        "secondary_bg": "#2d3748",
-        "text": "#f7fafc"
-    }
-}
-
-class MCPChatbot:
-    def __init__(self):
-        utils.configure_openai_api_key()
-        self.mcp_server_url = "http://localhost:8000"
-        
-    def get_current_theme(self):
-        """Get current theme from shared MCP state file"""
-        if STATE_FILE.exists():
-            try:
-                with open(STATE_FILE, "r") as f:
-                    state = json.load(f)
-                    return state.get("theme", "light")
-            except Exception:
-                pass
-        return "light"
+def setup_page():
+    """Set up the page with basic config."""
+    st.set_page_config(
+        page_title="MCP Agent",
+        page_icon="🔧",
+        layout="wide",
+        initial_sidebar_state="collapsed"
+    )
     
-    def apply_mcp_theme(self):
-        """Apply dynamic theme based on MCP state"""
-        current_theme = self.get_current_theme()
-        theme = THEMES.get(current_theme, THEMES["light"])
-        
-        st.markdown(f"""
-            <style>
-                .stApp {{
-                    background: linear-gradient(135deg, {theme['bg']} 0%, {theme['secondary_bg']} 100%);
-                    color: {theme['text']};
-                }}
-                .stButton > button {{
-                    background: linear-gradient(45deg, {theme['primary']}, #764ba2);
-                    color: white;
-                    border: none;
-                    border-radius: 25px;
-                    padding: 0.5rem 2rem;
-                    transition: all 0.3s ease;
-                }}
-                .stButton > button:hover {{
-                    transform: translateY(-2px);
-                    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-                }}
-                .stTextInput > div > div > input {{
-                    background-color: {theme['secondary_bg']};
-                    color: {theme['text']};
-                    border: 2px solid {theme['primary']};
-                    border-radius: 15px;
-                }}
-                h1, h2, h3 {{
-                    color: {theme['primary']};
-                }}
-                .mcp-status {{
-                    background: rgba(102, 126, 234, 0.1);
-                    border: 1px solid {theme['primary']};
-                    border-radius: 10px;
-                    padding: 1rem;
-                    margin: 1rem 0;
-                }}
-            </style>
-        """, unsafe_allow_html=True)
-        
-        return current_theme
+    # Force light theme
+    st.markdown("""
+    <style>
+        .stApp {
+            background-color: #ffffff !important;
+            color: #262730 !important;
+        }
+        .stApp > div {
+            background-color: #ffffff !important;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #f0f2f6 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+def configure_mcp_settings():
+    """Configure OpenAI API key and MCP URL."""
+    api_key = st.session_state.get("mcp_openai_key", "")
+    mcp_url = st.session_state.get("mcp_server_url", "")
     
-    def setup_sidebar(self):
-        """Setup sidebar with MCP configuration"""
-        with st.sidebar:
-            st.markdown("### 🔧 MCP Configuration")
+    if not api_key or not mcp_url:
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("### 🔧 Enter Configuration")
             
-            # MCP Server Status
-            st.markdown("""
-                <div class="mcp-status">
-                    <h4>🌐 MCP Server</h4>
-                    <p>Theme Server: localhost:8000</p>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            # Current theme display
-            current_theme = self.get_current_theme()
-            theme_emoji = "🌙" if current_theme == "dark" else "☀️"
-            st.markdown(f"**Current Theme:** {theme_emoji} {current_theme.title()}")
-            
-            st.markdown("---")
-            st.markdown("### 🚀 MCP Features")
-            st.markdown("• Dynamic Theme Control")
-            st.markdown("• Real-time State Management")
-            st.markdown("• Server Communication")
-            st.markdown("• Context Protocol Integration")
-            
-            st.markdown("---")
-            st.markdown("### 💡 Try These Commands")
-            st.markdown("""
-            - "Change to dark theme"
-            - "Switch to light theme"  
-            - "What theme am I using?"
-            - "Show me the current state"
-            """)
-
-    def display_messages(self):
-        """Display chat messages with modern styling"""
-        if not st.session_state.messages:
-            st.markdown("""
-            <div class="welcome-screen">
-                <div class="welcome-icon">🔧</div>
-                <h3>MCP Agent Assistant</h3>
-                <p>Experience Model Context Protocol with dynamic theme switching!</p>
-                <p style="font-size: 0.9em; opacity: 0.8;">Try: "Change to dark theme" or "Switch to light theme"</p>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown('<div class="messages-area">', unsafe_allow_html=True)
-            for message in st.session_state.messages:
-                role = message["role"]
-                content = message["content"]
+            # Check if we just connected (avoid showing form again)
+            if st.session_state.get("mcp_keys_connected", False):
+                st.session_state["mcp_keys_connected"] = False
+                return True
                 
-                if role == "user":
-                    st.markdown(f"""
-                    <div class="chat-message user">
-                        <div class="message-bubble user">{content}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.markdown(f"""
-                    <div class="chat-message assistant">
-                        <div class="message-bubble assistant">{content}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-    def main(self):
-        """Main application function"""
-        # Apply MCP theme dynamically
-        current_theme = self.apply_mcp_theme()
-        
-        # Setup sidebar
-        self.setup_sidebar()
-        
-        # Initialize messages
-        if "messages" not in st.session_state:
-            st.session_state.messages = []
-            
-        # Track theme changes for rerun
-        if "last_theme" not in st.session_state:
-            st.session_state.last_theme = current_theme
-        elif st.session_state.last_theme != current_theme:
-            st.session_state.last_theme = current_theme
-            st.rerun()
-        
-        # Display messages
-        self.display_messages()
-        
-        # Chat input
-        if user_prompt := st.chat_input("Ask me to change themes or anything else..."):
-            # Add user message
-            st.session_state.messages.append({"role": "user", "content": user_prompt})
-            
-            # Generate response using MCP agent
-            try:
-                # Show processing animation
-                st.markdown(show_processing_animation(), unsafe_allow_html=True)
+            api_key_input = st.text_input(
+                "OpenAI API Key",
+                type="password",
+                placeholder="sk-proj-...",
+                value=api_key,
+                key="mcp_api_key_input"
+            )
                 
-                # Get OpenAI API key
-                openai_api_key = os.environ.get("OPENAI_API_KEY")
-                if not openai_api_key:
-                    response_text = "⚠️ OpenAI API key not configured. Please set it in the sidebar."
+            mcp_url_input = st.text_input(
+                "MCP Server URL",
+                placeholder="http://localhost:8000",
+                value=mcp_url if mcp_url else "http://localhost:8000",
+                key="mcp_url_input"
+            )
+            
+            if st.button("Connect", type="primary", use_container_width=True):
+                if api_key_input and api_key_input.startswith("sk-") and mcp_url_input:
+                    st.session_state["mcp_openai_key"] = api_key_input
+                    st.session_state["mcp_server_url"] = mcp_url_input
+                    st.session_state["mcp_keys_connected"] = True
+                    st.rerun()
                 else:
-                    # Create event loop for async MCP agent
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
+                    if not api_key_input or not api_key_input.startswith("sk-"):
+                        st.error("❌ Please enter a valid OpenAI API key")
+                    if not mcp_url_input:
+                        st.error("❌ Please enter a valid MCP URL")
+        return False
+    
+    return True
+
+def display_messages():
+    """Display chat messages using pure Streamlit components."""
+    if not st.session_state.mcp_messages:
+        st.info("""🔧 **MCP Agent Ready!** 
+
+Ask me anything! I'm powered by Model Context Protocol.
+
+**I can help with:**
+• General questions and conversations
+• Using any tools from connected MCP servers
+• Accessing enhanced capabilities beyond standard LLM features""")
+    else:
+        for message in st.session_state.mcp_messages:
+            if message["role"] == "user":
+                with st.chat_message("user"):
+                    st.write(message["content"])
+            else:
+                with st.chat_message("assistant"):
+                    st.write(message["content"])
+
+def main():
+    """Main application function."""
+    setup_page()
+    
+    # Page title - centered
+    st.markdown("<h1 style='text-align: center; margin-top: -75px;'>🔧 MCP Agent</h1>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Check configuration - Show login screen
+    if not configure_mcp_settings():
+        return
+    
+    # Initialize messages with unique key for MCP Agent
+    if "mcp_messages" not in st.session_state:
+        st.session_state.mcp_messages = []
+    
+    # Display messages
+    display_messages()
+    
+    # Generate response if needed
+    if (st.session_state.mcp_messages and 
+        st.session_state.mcp_messages[-1]["role"] == "user" and
+        not st.session_state.get("mcp_processing", False)):
+        
+        st.session_state.mcp_processing = True
+        try:
+            # Show processing indicator
+            with st.chat_message("assistant"):
+                with st.spinner("Processing with MCP agent..."):
+                    # Get the last user message
+                    user_query = st.session_state.mcp_messages[-1]["content"]
                     
-                    try:
-                        # Get MCP agent instance
-                        agent = loop.run_until_complete(
-                            get_agent(openai_api_key, self.mcp_server_url)
-                        )
-                        
-                        # Prepare messages for agent
-                        messages = [{"role": msg["role"], "content": msg["content"]} 
-                                  for msg in st.session_state.messages]
-                        
-                        # Invoke agent
-                        response_text = loop.run_until_complete(agent.invoke(messages))
-                        
-                    except Exception as e:
-                        response_text = f"❌ MCP Agent Error: {str(e)}\n\nMake sure the MCP theme server is running:\n```bash\ncd 3_agentic_automation_with_mcp\nbash run.sh\n```"
-                    finally:
-                        loop.close()
-                
-                # Add assistant response
-                st.session_state.messages.append({"role": "assistant", "content": response_text})
-                
-                st.rerun()
-                
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
+                    # Get OpenAI API key
+                    openai_api_key = st.session_state.get("mcp_openai_key", "")
+                    mcp_server_url = st.session_state.get("mcp_server_url", "")
+                    
+                    if openai_api_key and mcp_server_url:
+                        try:
+                            # Create event loop for async MCP agent
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            
+                            try:
+                                # Get MCP agent instance
+                                agent = loop.run_until_complete(
+                                    get_agent(openai_api_key, mcp_server_url)
+                                )
+                                
+                                # Prepare messages for agent
+                                messages = [{"role": msg["role"], "content": msg["content"]} 
+                                          for msg in st.session_state.mcp_messages]
+                                
+                                # Invoke agent
+                                response_text = loop.run_until_complete(agent.invoke(messages))
+                                
+                            finally:
+                                loop.close()
+                                
+                        except Exception as e:
+                            response_text = f"❌ MCP Agent Error: {str(e)}"
+                    else:
+                        response_text = "❌ Configuration missing. Please check API key and MCP URL."
+                    
+                    # Add assistant response
+                    st.session_state.mcp_messages.append({"role": "assistant", "content": response_text})
+            
+            st.session_state.mcp_processing = False
+            st.rerun()
+            
+        except Exception as e:
+            st.session_state.mcp_processing = False
+            st.error(f"Error: {str(e)}")
+            st.rerun()
 
+    # Chat input - outside container to prevent shifting
+    if prompt := st.chat_input("Ask me anything..."):
+        # Add user message and rerun to show it first
+        st.session_state.mcp_messages.append({"role": "user", "content": prompt})
+        st.rerun()
 
 if __name__ == "__main__":
-    chatbot = MCPChatbot()
-    chatbot.main()
+    main()
+    
