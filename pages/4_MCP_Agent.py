@@ -60,8 +60,8 @@ def configure_mcp_settings():
                 
             mcp_url_input = st.text_input(
                 "MCP Server URL",
-                placeholder="http://localhost:8000",
-                value=mcp_url if mcp_url else "http://localhost:8000",
+                placeholder="https://example.com/mcp",
+                value=mcp_url if mcp_url else "https://example.com/mcp",
                 key="mcp_url_input"
             )
             
