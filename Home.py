@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import glob
+from ui_components import HomePageUI
 
 st.set_page_config(
     page_title="LLM Bootcamp Project",
@@ -10,58 +11,11 @@ st.set_page_config(
 )
 
 
-# Enhanced visual styling for home page
-st.markdown("""
-<style>
-    /* Enhanced card styling */
-    .stButton > button {
-        background: linear-gradient(135deg, #00d4aa, #00a883);
-        border: none;
-        border-radius: 15px;
-        color: white;
-        font-weight: 600;
-        padding: 1rem 2rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 20px rgba(0, 212, 170, 0.3);
-        font-size: 1.1rem;
-        height: 80px;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0, 212, 170, 0.4);
-        background: linear-gradient(135deg, #00e6c0, #00cc99);
-    }
-    
-    /* Enhanced main title */
-    .main-title {
-        background: linear-gradient(135deg, #00d4aa, #ffffff, #00d4aa);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 800;
-        text-shadow: 0 0 40px rgba(0, 212, 170, 0.5);
-    }
-    
-    /* Feature list styling */
-    .feature-list {
-        background: linear-gradient(135deg, #1e1e2e, #2a2a3a);
-        padding: 2rem;
-        border-radius: 15px;
-        border: 1px solid rgba(0, 212, 170, 0.1);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        margin-top: 2rem;
-    }
-</style>
+# Apply centralized home page styling
+HomePageUI.apply_home_styling()
 
-<div style="text-align: center; margin: 3rem 0;">
-    <h1 class="main-title" style="font-size: 4rem; margin-bottom: 1rem;">
-        🤖 LLM Bootcamp Project
-    </h1>
-    <p style="font-size: 1.5rem; color: #a0a0a0; margin-bottom: 2rem;">
-        Explore advanced AI chatbot capabilities with multiple specialized agents
-    </p>
-</div>
-""", unsafe_allow_html=True)
+# Render hero section using centralized component
+HomePageUI.render_hero_section()
 
 st.markdown("### Available AI Assistants:")
 
@@ -131,7 +85,7 @@ if os.path.exists(pages_dir):
             if st.button(button_text, key=page_name, use_container_width=True):
                 st.switch_page(page_file)
 
-    # Enhanced feature list
+    # Enhanced feature list using centralized components
     st.markdown("""
     <div class="feature-list">
         <h3 style="color: #00d4aa; margin-bottom: 1.5rem; text-align: center;">✨ Available Features</h3>
@@ -141,18 +95,7 @@ if os.path.exists(pages_dir):
     for page_file in page_files:
         page_name = os.path.basename(page_file)
         icon, title, description = get_page_info(page_name)
-        st.markdown(f"""
-        <div style="
-            background: linear-gradient(135deg, #1e1e2e, #2a2a3a);
-            padding: 1rem;
-            margin: 0.5rem 0;
-            border-radius: 10px;
-            border-left: 4px solid #00d4aa;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        ">
-            <strong style="color: #00d4aa;">{icon} {title}</strong> - <span style="color: #cccccc;">{description}</span>
-        </div>
-        """, unsafe_allow_html=True)
+        HomePageUI.render_feature_card(icon, title, description)
 
 else:
     st.error("Pages directory not found!")

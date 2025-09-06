@@ -9,6 +9,7 @@ import os
 import asyncio
 from pathlib import Path
 from agent_service import get_agent
+from ui_components import ChatbotUI, APIKeyUI
 
 def setup_page():
     """Set up the page with basic config."""

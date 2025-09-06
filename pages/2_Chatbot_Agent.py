@@ -4,6 +4,7 @@ from langchain_openai import ChatOpenAI
 from langchain_tavily import TavilySearch
 from langgraph.prebuilt import create_react_agent
 from langchain_community.callbacks.streamlit import StreamlitCallbackHandler
+from ui_components import ChatbotUI, APIKeyUI
 
 # BEGIN: Added extra tool imports
 from langchain_community.tools import WikipediaQueryRun
@@ -133,19 +134,13 @@ class ChatbotTools:
 
 def main():
     """Main application function."""
-    setup_page()
-    
-    # Page title - centered with enhanced styling
-    st.markdown("""
-    <div style='text-align: center; margin: 2rem 0;'>
-        <h1 style='font-size: 3.5rem; margin-bottom: 1rem; text-shadow: 0 0 30px rgba(0, 212, 170, 0.5);'>
-            🌐 Chatbot Agent
-        </h1>
-        <p style='font-size: 1.2rem; color: #a0a0a0; margin-top: -0.5rem;'>
-            AI agent with real-time web search capabilities
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    # Use centralized UI setup and header
+    ChatbotUI.setup_page("Agent Chatbot", "🌐")
+    ChatbotUI.render_page_header(
+        "🌐", 
+        "Chatbot Agent", 
+        "AI agent with real-time web search capabilities"
+    )
     
     # Check API keys - Show login screen
     if not configure_api_keys():
