@@ -24,21 +24,84 @@ def setup_page():
         initial_sidebar_state="collapsed"
     )
     
-    # Force light theme
+    # Enhanced visual styling
     st.markdown("""
     <style>
-        .stApp {
-            background-color: #ffffff !important;
-            color: #262730 !important;
+        /* Enhanced chat styling */
+        .stChatMessage {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #1e1e2e, #2a2a3a);
+            border: 1px solid rgba(0, 212, 170, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
-        .stApp > div {
-            background-color: #ffffff !important;
+        
+        /* Enhanced buttons */
+        .stButton > button {
+            background: linear-gradient(135deg, #00d4aa, #00a883);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
         }
-        [data-testid="stSidebar"] {
-            background-color: #f0f2f6 !important;
+        
+        .stButton > button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
+            background: linear-gradient(135deg, #00e6c0, #00cc99);
+        }
+        
+        /* Enhanced text inputs */
+        .stTextInput > div > div > input {
+            background: linear-gradient(135deg, #1e1e2e, #2a2a3a);
+            border: 2px solid rgba(0, 212, 170, 0.2);
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 16px;
+            padding: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .stTextInput > div > div > input:focus {
+            border-color: #00d4aa;
+            box-shadow: 0 0 20px rgba(0, 212, 170, 0.3);
+        }
+        
+        /* Enhanced file uploader */
+        .stFileUploader > div {
+            background: linear-gradient(135deg, #1e1e2e, #2a2a3a);
+            border: 2px dashed rgba(0, 212, 170, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stFileUploader > div:hover {
+            border-color: #00d4aa;
+            box-shadow: 0 0 20px rgba(0, 212, 170, 0.2);
+        }
+        
+        /* Enhanced titles */
+        h1 {
+            background: linear-gradient(135deg, #00d4aa, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            text-shadow: 0 0 30px rgba(0, 212, 170, 0.5);
+        }
+        
+        /* Enhanced progress bars */
+        .stProgress > div > div {
+            background: linear-gradient(135deg, #00d4aa, #00a883);
         }
     </style>
     """, unsafe_allow_html=True)
+    
 
 def configure_api_key():
     """Configure OpenAI API key."""
@@ -212,10 +275,10 @@ class CustomDataChatbot:
         if st.session_state.rag_messages:
             for message in st.session_state.rag_messages:
                 if message["role"] == "user":
-                    with st.chat_message("user"):
+                    with st.chat_message("user", avatar="https://em-content.zobj.net/source/apple/354/man-technologist-medium-skin-tone_1f468-1f3fd-200d-1f4bb.png"):
                         st.write(message["content"])
                 else:
-                    with st.chat_message("assistant"):
+                    with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
                         st.write(message["content"])
 
     def main(self):
@@ -264,7 +327,7 @@ class CustomDataChatbot:
             st.session_state.rag_processing = True
             try:
                 # Show processing indicator
-                with st.chat_message("assistant"):
+                with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
                     with st.spinner("Analyzing documents..."):
                         # Get the last user message
                         user_query = st.session_state.rag_messages[-1]["content"]
@@ -295,9 +358,17 @@ def main():
     """Main application function."""
     setup_page()
     
-    # Page title - centered
-    st.markdown("<h1 style='text-align: center; margin-top: -75px;'>📄 Chat with your Data</h1>", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Page title - centered with enhanced styling
+    st.markdown("""
+    <div style='text-align: center; margin: 2rem 0;'>
+        <h1 style='font-size: 3.5rem; margin-bottom: 1rem; text-shadow: 0 0 30px rgba(0, 212, 170, 0.5);'>
+            📚 Chat with your Data
+        </h1>
+        <p style='font-size: 1.2rem; color: #a0a0a0; margin-top: -0.5rem;'>
+            Upload documents and get intelligent answers using RAG
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Check API key - Show login screen
     if not configure_api_key():

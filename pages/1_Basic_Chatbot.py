@@ -126,19 +126,27 @@ def display_messages():
     else:
         for message in st.session_state.basic_messages:
             if message["role"] == "user":
-                with st.chat_message("user"):
+                with st.chat_message("user", avatar="https://em-content.zobj.net/source/apple/354/man-technologist-medium-skin-tone_1f468-1f3fd-200d-1f4bb.png"):
                     st.write(message["content"])
             else:
-                with st.chat_message("assistant"):
+                with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
                     st.write(message["content"])
 
 def main():
     """Main application function."""
     setup_page()
     
-    # Page title - centered
-    st.markdown("<h1 style='text-align: center; margin-top: -75px;'>🤖 Basic Chatbot</h1>", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Page title - centered with enhanced styling
+    st.markdown("""
+    <div style='text-align: center; margin: 2rem 0;'>
+        <h1 style='font-size: 3.5rem; margin-bottom: 1rem; text-shadow: 0 0 30px rgba(0, 212, 170, 0.5);'>
+            🚀 Basic Chatbot
+        </h1>
+        <p style='font-size: 1.2rem; color: #a0a0a0; margin-top: -0.5rem;'>
+            Your intelligent AI conversation partner
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Check API key - Show login screen
     if not configure_api_key():
@@ -173,7 +181,7 @@ def main():
             st.session_state.basic_processing = True
             try:
                 # Show processing indicator
-                with st.chat_message("assistant"):
+                with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
                     with st.spinner("Thinking..."):
                         # Get the last user message
                         user_input = st.session_state.basic_messages[-1]["content"]
