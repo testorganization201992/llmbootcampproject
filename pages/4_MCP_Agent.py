@@ -8,8 +8,8 @@ import streamlit as st
 import os
 import asyncio
 from pathlib import Path
-from agent_service import get_agent
 from ui_components import ChatbotUI, APIKeyUI
+from langchain_helpers import MCPHelper, ValidationHelper
 
 def setup_page():
     """Set up the page with basic config."""
@@ -134,15 +134,18 @@ def configure_mcp_settings():
             )
             
             if st.button("Connect", type="primary", use_container_width=True):
-                if api_key_input and api_key_input.startswith("sk-") and mcp_url_input:
+                valid_openai = ValidationHelper.validate_openai_key(api_key_input)
+                valid_mcp_url = ValidationHelper.validate_mcp_url(mcp_url_input)
+                
+                if valid_openai and valid_mcp_url:
                     st.session_state["mcp_openai_key"] = api_key_input
                     st.session_state["mcp_server_url"] = mcp_url_input
                     st.session_state["mcp_keys_connected"] = True
                     st.rerun()
                 else:
-                    if not api_key_input or not api_key_input.startswith("sk-"):
+                    if not valid_openai:
                         st.error("❌ Please enter a valid OpenAI API key")
-                    if not mcp_url_input:
+                    if not valid_mcp_url:
                         st.error("❌ Please enter a valid MCP URL")
         return False
     
@@ -221,15 +224,17 @@ def main():
                             try:
                                 # Get MCP agent instance
                                 agent = loop.run_until_complete(
-                                    get_agent(openai_api_key, mcp_server_url)
+                                    MCPHelper.get_agent(openai_api_key, mcp_server_url)
                                 )
                                 
                                 # Prepare messages for agent
                                 messages = [{"role": msg["role"], "content": msg["content"]} 
                                           for msg in st.session_state.mcp_messages]
                                 
-                                # Invoke agent
-                                response_text = loop.run_until_complete(agent.invoke(messages))
+                                # Invoke agent using helper
+                                response_text = loop.run_until_complete(
+                                    MCPHelper.process_mcp_query(agent, messages)
+                                )
                                 
                             finally:
                                 loop.close()

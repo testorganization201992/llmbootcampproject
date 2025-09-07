@@ -145,14 +145,10 @@ def main():
     with st.container():
         
         # Simple chain with default configuration
-        config = {
-            "model": "gpt-4o-mini",
-            "temperature": 0.7,
-            "max_tokens": 2000
-        }
+        config = BasicChatbotHelper.get_default_config()
         
         if "basic_chain" not in st.session_state:
-            st.session_state.basic_chain = build_chain(config)
+            st.session_state.basic_chain = BasicChatbotHelper.build_chain(config)
         
         # Initialize messages with unique key
         if "basic_messages" not in st.session_state:

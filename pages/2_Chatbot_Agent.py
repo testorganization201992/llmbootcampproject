@@ -1,10 +1,8 @@
 import streamlit as st
 import os
-from langchain_openai import ChatOpenAI
-from langchain_tavily import TavilySearch
-from langgraph.prebuilt import create_react_agent
-from langchain_community.callbacks.streamlit import StreamlitCallbackHandler
 from ui_components import ChatbotUI, APIKeyUI
+from langchain_helpers import AgentChatbotHelper, ValidationHelper
+import asyncio
 
 # BEGIN: Added extra tool imports
 from langchain_community.tools import WikipediaQueryRun
@@ -21,7 +19,7 @@ st.write("Equipped with Tavily search agent, Wikipedia, and Arxiv tools.")
 
 class ChatbotTools:
     def __init__(self):
-        self.openai_model = "gpt-4o-mini"
+        pass
 
     def setup_agent(self):
         # Tavily tool
@@ -90,32 +88,18 @@ class ChatbotTools:
                         # Get the last user message
                         user_query = st.session_state.agent_messages[-1]["content"]
                         
-                        acc = ""
-                        # Stream state updates (chunked by reasoning/tool steps)
-                        for update in agent.stream({"messages": user_query}):
-                            msgs = update.get("messages", [])
-                            for m in msgs:
-                                content = getattr(m, "content", "")
-                                if not content and isinstance(getattr(m, "content", None), list):
-                                    content = "".join(
-                                        c.get("text", "")
-                                        for c in m.content
-                                        if isinstance(c, dict) and c.get("type") == "text"
-                                    )
-                                if content:
-                                    acc += content
-
-                        # Fallback if nothing streamed
-                        if not acc:
-                            resp = agent.invoke({"messages": user_query})
-                            acc = (
-                                resp["messages"][-1].content
-                                if isinstance(resp, dict) and resp.get("messages")
-                                else str(resp)
+                        # Process with helper function
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        try:
+                            response = loop.run_until_complete(
+                                AgentChatbotHelper.process_agent_response(agent, user_query)
                             )
-
+                        finally:
+                            loop.close()
+                        
                         # Add assistant response
-                        st.session_state.agent_messages.append({"role": "assistant", "content": acc})
+                        st.session_state.agent_messages.append({"role": "assistant", "content": response})
                 
                 st.session_state.agent_processing = False
                 st.rerun()
