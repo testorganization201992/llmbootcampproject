@@ -148,11 +148,23 @@ def main():
         config = BasicChatbotHelper.get_default_config()
         api_key = st.session_state.get("basic_openai_key", "")
         
-        # Always recreate chain if API key exists and chain doesn't exist or API key changed
+        # Always recreate chain and memory if API key exists and changed
         if api_key and ("basic_chain" not in st.session_state or 
                        st.session_state.get("basic_current_api_key") != api_key):
             st.session_state.basic_chain = BasicChatbotHelper.build_chain(config, api_key)
             st.session_state.basic_current_api_key = api_key
+            
+            # Initialize memory manager
+            session_id = f"basic_chat_{st.session_state.get('session_id', 'default')}"
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                st.session_state.basic_memory = loop.run_until_complete(
+                    BasicChatbotHelper.create_memory_manager(session_id, api_key)
+                )
+            finally:
+                loop.close()
+                
         elif not api_key:
             st.error("API key not found. Please refresh the page.")
             return
@@ -176,17 +188,46 @@ def main():
                     with st.spinner("Thinking..."):
                         # Get the last user message
                         user_input = st.session_state.basic_messages[-1]["content"]
-                        response = BasicChatbotHelper.invoke_with_memory(
-                            st.session_state.basic_chain, 
-                            user_input, 
-                            st.session_state.basic_messages
-                        )
                         
-                        # Add assistant response
-                        st.session_state.basic_messages.append({
+                        # Add user message to memory
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        try:
+                            # Add user message to memory
+                            loop.run_until_complete(
+                                st.session_state.basic_memory.add_message({
+                                    "role": "user",
+                                    "content": user_input
+                                })
+                            )
+                            
+                            # Get response with memory
+                            response = loop.run_until_complete(
+                                BasicChatbotHelper.invoke_with_memory(
+                                    st.session_state.basic_chain,
+                                    user_input,
+                                    st.session_state.basic_memory
+                                )
+                            )
+                        finally:
+                            loop.close()
+                        
+                        # Add assistant response to both UI and memory
+                        assistant_message = {
                             "role": "assistant", 
                             "content": response.content
-                        })
+                        }
+                        st.session_state.basic_messages.append(assistant_message)
+                        
+                        # Add assistant response to memory
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        try:
+                            loop.run_until_complete(
+                                st.session_state.basic_memory.add_message(assistant_message)
+                            )
+                        finally:
+                            loop.close()
                 
                 st.session_state.basic_processing = False
                 st.rerun()
