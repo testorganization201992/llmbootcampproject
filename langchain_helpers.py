@@ -49,10 +49,27 @@ class BasicChatbotHelper:
         
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_message),
+            ("placeholder", "{chat_history}"),
             ("human", "{input}"),
         ])
         
         return prompt | llm
+    
+    @staticmethod
+    def invoke_with_memory(chain: Any, user_input: str, chat_history: List[Dict[str, str]]) -> Any:
+        """Invoke chain with conversation memory"""
+        # Convert chat history to LangChain message format
+        formatted_history = []
+        for msg in chat_history[:-1]:  # Exclude the current user message
+            if msg["role"] == "user":
+                formatted_history.append(("human", msg["content"]))
+            elif msg["role"] == "assistant":
+                formatted_history.append(("assistant", msg["content"]))
+        
+        return chain.invoke({
+            "input": user_input,
+            "chat_history": formatted_history
+        })
     
     @staticmethod
     def get_default_config() -> Dict[str, Any]:

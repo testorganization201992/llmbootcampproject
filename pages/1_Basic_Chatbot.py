@@ -133,7 +133,7 @@ def main():
     ChatbotUI.render_page_header(
         "🚀", 
         "Basic Chatbot", 
-        "Your intelligent AI conversation partner"
+        "Your intelligent AI conversation partner with memory"
     )
     
     # Check API key - Show login screen
@@ -176,7 +176,11 @@ def main():
                     with st.spinner("Thinking..."):
                         # Get the last user message
                         user_input = st.session_state.basic_messages[-1]["content"]
-                        response = st.session_state.basic_chain.invoke({"input": user_input})
+                        response = BasicChatbotHelper.invoke_with_memory(
+                            st.session_state.basic_chain, 
+                            user_input, 
+                            st.session_state.basic_messages
+                        )
                         
                         # Add assistant response
                         st.session_state.basic_messages.append({
