@@ -146,14 +146,16 @@ def main():
         
         # Simple chain with default configuration
         config = BasicChatbotHelper.get_default_config()
+        api_key = st.session_state.get("basic_openai_key", "")
         
-        if "basic_chain" not in st.session_state:
-            api_key = st.session_state.get("basic_openai_key", "")
-            if api_key:
-                st.session_state.basic_chain = BasicChatbotHelper.build_chain(config, api_key)
-            else:
-                st.error("API key not found. Please refresh the page.")
-                return
+        # Always recreate chain if API key exists and chain doesn't exist or API key changed
+        if api_key and ("basic_chain" not in st.session_state or 
+                       st.session_state.get("basic_current_api_key") != api_key):
+            st.session_state.basic_chain = BasicChatbotHelper.build_chain(config, api_key)
+            st.session_state.basic_current_api_key = api_key
+        elif not api_key:
+            st.error("API key not found. Please refresh the page.")
+            return
         
         # Initialize messages with unique key
         if "basic_messages" not in st.session_state:
@@ -169,17 +171,18 @@ def main():
             
             st.session_state.basic_processing = True
             try:
-                # Show processing indicator using centralized UI
-                with ChatbotUI.render_processing_message("Thinking..."):
-                    # Get the last user message
-                    user_input = st.session_state.basic_messages[-1]["content"]
-                    response = st.session_state.basic_chain.invoke({"input": user_input})
-                    
-                    # Add assistant response
-                    st.session_state.basic_messages.append({
-                        "role": "assistant", 
-                        "content": response.content
-                    })
+                # Show processing indicator
+                with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
+                    with st.spinner("Thinking..."):
+                        # Get the last user message
+                        user_input = st.session_state.basic_messages[-1]["content"]
+                        response = st.session_state.basic_chain.invoke({"input": user_input})
+                        
+                        # Add assistant response
+                        st.session_state.basic_messages.append({
+                            "role": "assistant", 
+                            "content": response.content
+                        })
                 
                 st.session_state.basic_processing = False
                 st.rerun()
