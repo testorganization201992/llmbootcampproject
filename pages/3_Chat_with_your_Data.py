@@ -236,10 +236,10 @@ def main():
     # Page title - centered with enhanced styling
     st.markdown("""
     <div style='text-align: center; margin: 0.5rem 0 1rem 0;'>
-        <h1 style='font-size: 3.5rem; margin-bottom: 1rem; text-shadow: 0 0 30px rgba(0, 212, 170, 0.5);'>
+        <h1 style='font-size: 2.625rem; margin-bottom: 1rem; text-shadow: 0 0 30px rgba(0, 212, 170, 0.5);'>
             📚 Chat with your Data
         </h1>
-        <p style='font-size: 1.2rem; color: #a0a0a0; margin-top: -0.5rem;'>
+        <p style='font-size: 0.9rem; color: #a0a0a0; margin-top: -0.5rem;'>
             Upload documents and get intelligent answers using RAG
         </p>
     </div>
