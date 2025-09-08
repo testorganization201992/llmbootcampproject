@@ -19,17 +19,22 @@ class BasicChatbotHelper:
     """Helper class for basic chatbot functionality"""
     
     @staticmethod
-    def build_chain(config: Dict[str, Any]) -> Any:
+    def build_chain(config: Dict[str, Any], api_key: str = None) -> Any:
         """Build the LangChain chain for basic chatbot"""
-        llm = ChatOpenAI(
-            model=config["model"],
-            temperature=config["temperature"],
-            max_tokens=config["max_tokens"],
-            top_p=config.get("top_p", 1.0),
-            frequency_penalty=config.get("frequency_penalty", 0.0),
-            presence_penalty=config.get("presence_penalty", 0.0),
-            streaming=False
-        )
+        llm_kwargs = {
+            "model": config["model"],
+            "temperature": config["temperature"],
+            "max_tokens": config["max_tokens"],
+            "top_p": config.get("top_p", 1.0),
+            "frequency_penalty": config.get("frequency_penalty", 0.0),
+            "presence_penalty": config.get("presence_penalty", 0.0),
+            "streaming": False
+        }
+        
+        if api_key:
+            llm_kwargs["api_key"] = api_key
+            
+        llm = ChatOpenAI(**llm_kwargs)
         
         # Dynamic system prompt based on response style
         system_prompts = {
@@ -131,7 +136,7 @@ class RAGHelper:
         return file_path
     
     @staticmethod
-    def build_vectorstore(files) -> FAISS:
+    def build_vectorstore(files, api_key: str = None) -> FAISS:
         """Build vector store from uploaded PDF files"""
         docs: List[Document] = []
         
@@ -143,7 +148,11 @@ class RAGHelper:
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
         chunks = text_splitter.split_documents(docs)
         
-        embeddings = OpenAIEmbeddings()
+        embeddings_kwargs = {}
+        if api_key:
+            embeddings_kwargs["api_key"] = api_key
+            
+        embeddings = OpenAIEmbeddings(**embeddings_kwargs)
         vectordb = FAISS.from_documents(chunks, embeddings)
         
         return vectordb
@@ -224,11 +233,16 @@ class RAGHelper:
         return graph.compile()
     
     @staticmethod
-    def setup_rag_system(uploaded_files) -> Any:
+    def setup_rag_system(uploaded_files, api_key: str = None) -> Any:
         """Setup complete RAG system from uploaded files"""
-        vectordb = RAGHelper.build_vectorstore(uploaded_files)
+        vectordb = RAGHelper.build_vectorstore(uploaded_files, api_key)
         retriever = vectordb.as_retriever()
-        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, streaming=False)
+        
+        llm_kwargs = {"model": "gpt-4o-mini", "temperature": 0, "streaming": False}
+        if api_key:
+            llm_kwargs["api_key"] = api_key
+            
+        llm = ChatOpenAI(**llm_kwargs)
         return RAGHelper.build_simple_agentic_rag(retriever, llm)
 
 

@@ -142,7 +142,8 @@ class CustomDataChatbot:
         self.openai_model = "gpt-4o-mini"
 
     def setup_graph(self, uploaded_files):
-        return RAGHelper.setup_rag_system(uploaded_files)
+        api_key = st.session_state.get("rag_openai_key", "")
+        return RAGHelper.setup_rag_system(uploaded_files, api_key)
     
     def display_messages(self):
         """Display chat messages using pure Streamlit components."""

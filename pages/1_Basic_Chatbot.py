@@ -148,7 +148,12 @@ def main():
         config = BasicChatbotHelper.get_default_config()
         
         if "basic_chain" not in st.session_state:
-            st.session_state.basic_chain = BasicChatbotHelper.build_chain(config)
+            api_key = st.session_state.get("basic_openai_key", "")
+            if api_key:
+                st.session_state.basic_chain = BasicChatbotHelper.build_chain(config, api_key)
+            else:
+                st.error("API key not found. Please refresh the page.")
+                return
         
         # Initialize messages with unique key
         if "basic_messages" not in st.session_state:
