@@ -25,7 +25,4 @@ pypdf==6.0.0
 # MCP (Model Context Protocol) Dependencies
 langchain-mcp-adapters==0.1.9
 
-# Memory Framework
-langmem==0.0.29
-
 requests>=2.31.0

@@ -13,7 +13,6 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langgraph.graph import StateGraph, END
-from memory import MemoryManager
 
 
 class BasicChatbotHelper:
@@ -57,36 +56,20 @@ class BasicChatbotHelper:
         return prompt | llm
     
     @staticmethod
-    async def invoke_with_memory(chain: Any, user_input: str, memory_manager: MemoryManager) -> Any:
-        """Invoke chain with semantic and conversation memory"""
-        # Get comprehensive context from memory manager
-        context = await memory_manager.get_unified_context(user_input, conversation_limit=5, semantic_limit=3)
-        
-        # Convert context to LangChain message format
+    def invoke_with_memory(chain: Any, user_input: str, chat_history: List[Dict[str, str]]) -> Any:
+        """Invoke chain with conversation memory"""
+        # Convert chat history to LangChain message format
         formatted_history = []
-        for ctx in context:
-            if ctx["role"] == "user":
-                formatted_history.append(("human", ctx["content"]))
-            elif ctx["role"] == "assistant":
-                formatted_history.append(("assistant", ctx["content"]))
-            elif ctx["role"] == "system" and ctx["type"] == "semantic":
-                # Add semantic memories as system context
-                formatted_history.append(("system", f"Relevant context: {ctx['content']}"))
+        for msg in chat_history[:-1]:  # Exclude the current user message
+            if msg["role"] == "user":
+                formatted_history.append(("human", msg["content"]))
+            elif msg["role"] == "assistant":
+                formatted_history.append(("assistant", msg["content"]))
         
         return chain.invoke({
             "input": user_input,
             "chat_history": formatted_history
         })
-    
-    @staticmethod
-    async def create_memory_manager(session_id: str, api_key: str) -> MemoryManager:
-        """Create a memory manager instance"""
-        return MemoryManager(
-            session_id=session_id,
-            api_key=api_key,
-            enable_semantic=True,
-            enable_conversation=True
-        )
     
     @staticmethod
     def get_default_config() -> Dict[str, Any]:
