@@ -123,7 +123,7 @@ def main():
     ChatbotUI.render_page_header(
         "🌐", 
         "Chatbot Agent", 
-        "AI agent with real-time web search capabilities"
+        "AI agent with web search, Wikipedia, and research paper capabilities"
     )
     
     # Check API keys - Show login screen

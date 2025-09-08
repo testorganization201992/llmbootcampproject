@@ -26,3 +26,10 @@ pypdf==6.0.0
 langchain-mcp-adapters==0.1.9
 
 requests>=2.31.0
+
+# Assignment 2: Research agent tools
+wikipedia>=1.4.0
+arxiv==2.2.0
+
+# Assignment 3: Multi-format document support
+python-docx>=0.8.11

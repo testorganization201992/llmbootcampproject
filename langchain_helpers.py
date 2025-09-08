@@ -79,6 +79,186 @@ class BasicChatbotHelper:
             "temperature": 0.7,
             "max_tokens": 2000
         }
+    
+    @staticmethod
+    def get_creative_config() -> Dict[str, Any]:
+        """Configuration optimized for creative and imaginative responses"""
+        return {
+            "model": "gpt-4o-mini",
+            "temperature": 1.2,              # High creativity
+            "max_tokens": 3000,              # Extended response length
+            "top_p": 0.9,                    # Diverse token selection
+            "frequency_penalty": 0.3,        # Reduce repetition
+            "presence_penalty": 0.6,         # Encourage topic diversity
+            "response_style": "Creative"
+        }
+
+    @staticmethod
+    def get_analytical_config() -> Dict[str, Any]:
+        """Configuration for precise, analytical responses"""
+        return {
+            "model": "gpt-4o-mini",
+            "temperature": 0.1,              # Highly focused
+            "max_tokens": 2500,              # Comprehensive but controlled
+            "top_p": 0.95,                   # Precise token selection
+            "frequency_penalty": 0.0,        # Allow technical repetition
+            "presence_penalty": 0.0,         # Stay on topic
+            "response_style": "Technical"
+        }
+
+    @staticmethod
+    def get_conversational_config() -> Dict[str, Any]:
+        """Configuration for natural, friendly conversations"""
+        return {
+            "model": "gpt-4o-mini", 
+            "temperature": 0.8,              # Balanced creativity
+            "max_tokens": 2000,              # Natural response length
+            "top_p": 0.85,                   # Varied but focused
+            "frequency_penalty": 0.2,        # Slight repetition reduction
+            "presence_penalty": 0.3,         # Moderate topic variation
+            "response_style": "Casual"
+        }
+    
+    @staticmethod
+    def build_smart_memory_chain(config: Dict[str, Any], api_key: str = None) -> Any:
+        """Build LangGraph chain that extracts user info and summarizes conversations"""
+        from langgraph.graph import StateGraph, END
+        from typing_extensions import TypedDict
+        
+        # Define what our smart memory remembers
+        class SmartMemoryState(TypedDict):
+            messages: list
+            user_info: dict  # Store user name, job, interests, etc.
+            conversation_summary: str
+            current_input: str
+            response: str
+        
+        # Configure the LLM
+        llm_kwargs = {
+            "model": config["model"],
+            "temperature": config["temperature"],
+            "max_tokens": config["max_tokens"],
+            "streaming": False
+        }
+        
+        if api_key:
+            llm_kwargs["api_key"] = api_key
+            
+        llm = ChatOpenAI(**llm_kwargs)
+        
+        # Node 1: Generate response with memory context
+        def generate_response(state: SmartMemoryState):
+            # Build context from memory
+            context_parts = []
+            
+            # Add user info if we have any
+            if state.get("user_info"):
+                user_context = ", ".join([f"{k}: {v}" for k, v in state["user_info"].items()])
+                context_parts.append(f"What I know about you: {user_context}")
+            
+            # Add conversation summary if available
+            if state.get("conversation_summary"):
+                context_parts.append(f"Our conversation so far: {state['conversation_summary']}")
+            
+            # Build the prompt
+            system_prompt = f"""You are a helpful AI assistant with memory. 
+            
+            {'. '.join(context_parts) if context_parts else 'This is the start of our conversation.'}
+            
+            Respond naturally and reference previous context when relevant."""
+            
+            # Get recent messages for context (last 5 to keep it manageable)
+            recent_messages = state["messages"][-5:] if state["messages"] else []
+            
+            messages_for_llm = [("system", system_prompt)]
+            for msg in recent_messages:
+                role = "human" if msg["role"] == "user" else "assistant"
+                messages_for_llm.append((role, msg["content"]))
+            
+            # Add current input
+            messages_for_llm.append(("human", state["current_input"]))
+            
+            response = llm.invoke(messages_for_llm)
+            return {"response": response.content}
+        
+        # Node 2: Extract user information
+        def extract_user_info(state: SmartMemoryState):
+            current_info = state.get("user_info", {})
+            user_input = state["current_input"].lower()
+            
+            # Simple patterns to extract info
+            if "my name is" in user_input:
+                parts = user_input.split("my name is")
+                if len(parts) > 1:
+                    name = parts[1].split()[0].strip(".,!?").title()
+                    current_info["name"] = name
+            
+            if any(phrase in user_input for phrase in ["i work", "i'm a", "my job"]):
+                for phrase in ["i work as", "i work in", "i'm a", "i am a", "my job is"]:
+                    if phrase in user_input:
+                        parts = user_input.split(phrase)
+                        if len(parts) > 1:
+                            job = parts[1].split(".")[0].split(",")[0].strip()
+                            current_info["job"] = job
+                        break
+            
+            if any(phrase in user_input for phrase in ["i like", "i love", "i enjoy"]):
+                for phrase in ["i like", "i love", "i enjoy"]:
+                    if phrase in user_input:
+                        parts = user_input.split(phrase)
+                        if len(parts) > 1:
+                            interest = parts[1].split(".")[0].split(",")[0].strip()
+                            current_info["interests"] = current_info.get("interests", [])
+                            if interest not in current_info["interests"]:
+                                current_info["interests"].append(interest)
+                        break
+            
+            return {"user_info": current_info}
+        
+        # Node 3: Update conversation summary (every 10 messages)
+        def update_summary(state: SmartMemoryState):
+            messages = state["messages"]
+            
+            # Only update summary every 10 messages to save API calls
+            if len(messages) % 10 == 0 and len(messages) > 0:
+                # Get recent conversation
+                recent_conversation = []
+                for msg in messages[-10:]:
+                    role = "You" if msg["role"] == "user" else "Assistant"
+                    recent_conversation.append(f"{role}: {msg['content'][:100]}...")
+                
+                summary_prompt = f"""Briefly summarize this conversation in 2-3 sentences, focusing on main topics discussed:
+
+{chr(10).join(recent_conversation)}
+
+Current summary: {state.get('conversation_summary', 'None')}
+
+New summary:"""
+                
+                try:
+                    summary_response = llm.invoke([("human", summary_prompt)])
+                    return {"conversation_summary": summary_response.content}
+                except:
+                    # If summary fails, keep the old one
+                    pass
+            
+            return {"conversation_summary": state.get("conversation_summary", "")}
+        
+        # Build the graph
+        graph = StateGraph(SmartMemoryState)
+        
+        # Add our nodes
+        graph.add_node("generate", generate_response)
+        graph.add_node("extract_info", extract_user_info)
+        graph.add_node("summarize", update_summary)
+        
+        # Set up the flow: generate -> extract -> summarize -> end
+        graph.set_entry_point("generate")
+        graph.add_edge("generate", "extract_info")
+        graph.add_edge("extract_info", "summarize")
+        graph.add_edge("summarize", END)
+        
+        return graph.compile()
 
 
 class AgentChatbotHelper:
@@ -102,6 +282,41 @@ class AgentChatbotHelper:
         llm = ChatOpenAI(model="gpt-4o-mini", streaming=True, api_key=openai_api_key)
         agent = create_react_agent(llm, tools)
         return agent
+    
+    @staticmethod
+    def setup_agent_with_research_tools(openai_api_key: str, tavily_api_key: str) -> Any:
+        """Setup agent with Tavily, Wikipedia, and Arxiv tools"""
+        from langchain_tavily import TavilySearch
+        from langgraph.prebuilt import create_react_agent
+        from langchain_community.tools import WikipediaQueryRun
+        from langchain_community.utilities import WikipediaAPIWrapper, ArxivAPIWrapper
+        from langchain.agents import Tool
+        
+        # Web search (for current stuff)
+        tavily_search = TavilySearch(
+            max_results=5,
+            topic="general", 
+            tavily_api_key=tavily_api_key,
+        )
+        
+        # Wikipedia (for general knowledge)
+        wiki_tool = Tool(
+            name="wikipedia",
+            func=WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper()).run,
+            description="Search Wikipedia for topics, people, events, etc.",
+        )
+        
+        # Arxiv (for research papers)
+        arxiv_tool = Tool(
+            name="arxiv", 
+            func=ArxivAPIWrapper().run,
+            description="Find research papers and scientific articles.",
+        )
+        
+        tools = [tavily_search, wiki_tool, arxiv_tool]
+        
+        llm = ChatOpenAI(model="gpt-4o-mini", streaming=True, api_key=openai_api_key)
+        return create_react_agent(llm, tools)
     
     @staticmethod
     async def process_agent_response(agent: Any, user_query: str) -> str:
@@ -144,27 +359,56 @@ class RAGHelper:
         generation: str
     
     @staticmethod
-    def save_file(file, folder: str = "tmp") -> str:
-        """Save uploaded file to specified folder"""
+    def save_file(file, folder: str = "tmp") -> tuple[str, str]:
+        """Save file and return path + extension"""
         os.makedirs(folder, exist_ok=True)
         file_path = os.path.join(folder, file.name)
+        extension = os.path.splitext(file.name)[1].lower()
         with open(file_path, "wb") as f:
             f.write(file.getvalue())
-        return file_path
+        return file_path, extension
     
     @staticmethod
     def build_vectorstore(files, api_key: str = None) -> FAISS:
-        """Build vector store from uploaded PDF files"""
-        docs: List[Document] = []
+        """Build vector store from multiple file types"""
+        from langchain_community.document_loaders import TextLoader
+        try:
+            from langchain_community.document_loaders import Docx2txtLoader
+        except ImportError:
+            Docx2txtLoader = None
+            
+        docs = []
         
         for file in files:
-            path = RAGHelper.save_file(file)
-            loader = PyPDFLoader(path)
-            docs.extend(loader.load())
+            file_path, extension = RAGHelper.save_file(file)
+            
+            # Pick the right loader for each file type
+            if extension == '.pdf':
+                loader = PyPDFLoader(file_path)
+            elif extension == '.txt':
+                loader = TextLoader(file_path, encoding='utf-8')
+            elif extension == '.docx' and Docx2txtLoader:
+                loader = Docx2txtLoader(file_path)
+            else:
+                import streamlit as st
+                st.warning(f"Can't read {extension} files yet!")
+                continue
+                
+            try:
+                docs.extend(loader.load())
+            except Exception as e:
+                import streamlit as st
+                st.error(f"Couldn't load {file.name}: {str(e)}")
+                continue
         
+        if not docs:
+            raise ValueError("No documents loaded!")
+            
+        # Chunk the documents
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
         chunks = text_splitter.split_documents(docs)
         
+        # Create embeddings and vector store
         embeddings_kwargs = {}
         if api_key:
             embeddings_kwargs["api_key"] = api_key

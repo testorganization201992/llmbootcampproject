@@ -144,16 +144,77 @@ def main():
     # Main chat container
     with st.container():
         
-        # Simple chain with default configuration
-        config = BasicChatbotHelper.get_default_config()
+        # Create personality selector in sidebar
+        st.sidebar.markdown("### 🎭 Choose AI Personality")
+        config_type = st.sidebar.selectbox(
+            "Pick your AI's vibe:",
+            ["Default", "Creative", "Analytical", "Conversational"],
+            key="basic_config_type"
+        )
+
+        # Map personalities to configs
+        config_map = {
+            "Default": BasicChatbotHelper.get_default_config(),
+            "Creative": BasicChatbotHelper.get_creative_config(),
+            "Analytical": BasicChatbotHelper.get_analytical_config(), 
+            "Conversational": BasicChatbotHelper.get_conversational_config()
+        }
+
+        config = config_map[config_type]
+
+        # Show what's under the hood
+        with st.sidebar.expander("🔧 Current Settings"):
+            st.json(config)
+        
+        # Add smart memory toggle
+        use_smart_memory = st.sidebar.checkbox(
+            "🧠 Enable Smart Memory", 
+            help="AI will remember things about you and summarize conversations"
+        )
+
+        if use_smart_memory:
+            # Initialize smart memory state
+            if "smart_memory_state" not in st.session_state:
+                st.session_state.smart_memory_state = {
+                    "messages": [],
+                    "user_info": {},
+                    "conversation_summary": ""
+                }
+            
+            # Show what the AI remembers about you
+            with st.sidebar.expander("🧠 What I Remember"):
+                memory_state = st.session_state.smart_memory_state
+                
+                if memory_state["user_info"]:
+                    st.write("**About You:**")
+                    for key, value in memory_state["user_info"].items():
+                        st.write(f"• {key.title()}: {value}")
+                else:
+                    st.write("I don't know much about you yet!")
+                
+                if memory_state["conversation_summary"]:
+                    st.write("**Our Conversation:**")
+                    st.write(memory_state["conversation_summary"])
+        
         api_key = st.session_state.get("basic_openai_key", "")
         
         # Always recreate chain if API key exists and chain doesn't exist or API key changed
-        if api_key and ("basic_chain" not in st.session_state or 
-                       st.session_state.get("basic_current_api_key") != api_key):
-            st.session_state.basic_chain = BasicChatbotHelper.build_chain(config, api_key)
-            st.session_state.basic_current_api_key = api_key
-        elif not api_key:
+        if use_smart_memory:
+            # Build smart memory chain if needed
+            if api_key and ("smart_memory_chain" not in st.session_state or 
+                           st.session_state.get("smart_memory_config") != config_type):
+                st.session_state.smart_memory_chain = BasicChatbotHelper.build_smart_memory_chain(config, api_key)
+                st.session_state.smart_memory_config = config_type
+        else:
+            # Regular chain
+            if api_key and ("basic_chain" not in st.session_state or 
+                           st.session_state.get("basic_current_api_key") != api_key or
+                           st.session_state.get("basic_current_config") != config_type):
+                st.session_state.basic_chain = BasicChatbotHelper.build_chain(config, api_key)
+                st.session_state.basic_current_api_key = api_key
+                st.session_state.basic_current_config = config_type
+        
+        if not api_key:
             st.error("API key not found. Please refresh the page.")
             return
         
@@ -171,29 +232,66 @@ def main():
             
             st.session_state.basic_processing = True
             try:
-                # Show processing indicator
-                with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
-                    with st.spinner("Thinking..."):
-                        # Get the last user message
-                        user_input = st.session_state.basic_messages[-1]["content"]
-                        response = BasicChatbotHelper.invoke_with_memory(
-                            st.session_state.basic_chain, 
-                            user_input, 
-                            st.session_state.basic_messages
-                        )
-                        
-                        # Add assistant response
-                        st.session_state.basic_messages.append({
-                            "role": "assistant", 
-                            "content": response.content
-                        })
+                if use_smart_memory and "smart_memory_chain" in st.session_state:
+                    # Smart Memory Processing
+                    avatar = "🧠"
+                    spinner_text = "Thinking and remembering..."
+                    
+                    with st.chat_message("assistant", avatar=avatar):
+                        with st.spinner(spinner_text):
+                            user_input = st.session_state.basic_messages[-1]["content"]
+                            
+                            # Prepare state for LangGraph
+                            current_state = st.session_state.smart_memory_state.copy()
+                            current_state["current_input"] = user_input
+                            
+                            # Run through the smart memory graph
+                            result = st.session_state.smart_memory_chain.invoke(current_state)
+                            
+                            # Get the response
+                            response_content = result["response"]
+                            
+                            # Update our memory state
+                            st.session_state.smart_memory_state["messages"] = current_state["messages"] + [
+                                {"role": "user", "content": user_input},
+                                {"role": "assistant", "content": response_content}
+                            ]
+                            st.session_state.smart_memory_state["user_info"] = result.get("user_info", {})
+                            st.session_state.smart_memory_state["conversation_summary"] = result.get("conversation_summary", "")
+                            
+                            # Add to display
+                            st.session_state.basic_messages.append({
+                                "role": "assistant", 
+                                "content": response_content
+                            })
+                else:
+                    # Regular processing
+                    avatar = "https://em-content.zobj.net/source/apple/354/robot_1f916.png"
+                    spinner_text = "Thinking..."
+                    
+                    with st.chat_message("assistant", avatar=avatar):
+                        with st.spinner(spinner_text):
+                            # Get the last user message
+                            user_input = st.session_state.basic_messages[-1]["content"]
+                            response = BasicChatbotHelper.invoke_with_memory(
+                                st.session_state.basic_chain, 
+                                user_input, 
+                                st.session_state.basic_messages
+                            )
+                            
+                            # Add assistant response
+                            st.session_state.basic_messages.append({
+                                "role": "assistant", 
+                                "content": response.content
+                            })
                 
                 st.session_state.basic_processing = False
                 st.rerun()
                 
             except Exception as e:
                 st.session_state.basic_processing = False
-                st.error(f"Error: {str(e)}")
+                error_type = "Smart Memory Error" if use_smart_memory else "Error"
+                st.error(f"{error_type}: {str(e)}")
                 st.rerun()
 
     # Chat input - outside container to prevent shifting

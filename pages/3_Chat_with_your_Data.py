@@ -169,9 +169,10 @@ class CustomDataChatbot:
         col1, col2, col3 = st.columns([2, 1.5, 2])
         with col2:
             uploaded_files = st.file_uploader(
-                label="**Upload PDF files to chat with your documents**",
-                type=["pdf"],
-                accept_multiple_files=True
+                label="📎 Drop your docs here",
+                type=['pdf', 'txt', 'docx'],  # Now accepts all 3 types!
+                accept_multiple_files=True,
+                help="Upload PDFs, text files, or Word docs"
             )
             
             # Files are handled automatically - no need for success message
