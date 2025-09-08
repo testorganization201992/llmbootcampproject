@@ -235,7 +235,7 @@ def main():
     
     # Page title - centered with enhanced styling
     st.markdown("""
-    <div style='text-align: center; margin: 2rem 0;'>
+    <div style='text-align: center; margin: 0.5rem 0 1rem 0;'>
         <h1 style='font-size: 3.5rem; margin-bottom: 1rem; text-shadow: 0 0 30px rgba(0, 212, 170, 0.5);'>
             📚 Chat with your Data
         </h1>

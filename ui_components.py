@@ -151,7 +151,7 @@ class ChatbotUI:
     def render_page_header(icon, title, subtitle):
         """Render enhanced page header with title and subtitle"""
         st.markdown(f"""
-        <div style='text-align: center; margin: 2rem 0;'>
+        <div style='text-align: center; margin: 0.5rem 0 1rem 0;'>
             <h1 style='font-size: 3.5rem; margin-bottom: 1rem; text-shadow: 0 0 30px rgba(0, 212, 170, 0.5);'>
                 {icon} {title}
             </h1>
@@ -247,7 +247,7 @@ class HomePageUI:
     def render_hero_section():
         """Render the hero section for home page"""
         st.markdown("""
-        <div style="text-align: center; margin: 3rem 0;">
+        <div style="text-align: center; margin: 1rem 0 2rem 0;">
             <h1 class="main-title" style="font-size: 4rem; margin-bottom: 1rem;">
                 🤖 LLM Bootcamp Project
             </h1>
