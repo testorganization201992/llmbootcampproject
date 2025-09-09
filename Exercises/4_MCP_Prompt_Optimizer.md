@@ -19,7 +19,7 @@ Add feedback collection to the MCP Agent page and implement prompt optimization 
    mcp_config = {
        "prompt_optimizer": {
            "command": "python",
-           "args": [os.path.join(os.path.dirname(__file__), "..", "server.py")],
+           "args": [os.path.join(os.path.dirname(__file__), "server.py")],
            "transport": "stdio",
        },
        "remote_server": {
