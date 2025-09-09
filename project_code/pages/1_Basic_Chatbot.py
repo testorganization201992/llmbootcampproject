@@ -116,7 +116,7 @@ def main() -> None:
             st.session_state.basic_processing = True
             try:
                 # Show processing indicator
-                with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
+                with st.chat_message("assistant", avatar=ChatbotUI.get_bot_avatar()):
                     with st.spinner("Thinking..."):
                         # Get the last user message
                         user_input = st.session_state.basic_messages[-1]["content"]

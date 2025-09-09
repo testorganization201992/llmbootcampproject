@@ -16,9 +16,45 @@ class ChatbotUI:
     and enhanced dark theme styling for all chatbot pages.
     """
     
-    # Avatar URLs for consistent chat message display
-    USER_AVATAR = "https://em-content.zobj.net/source/apple/354/man-technologist-medium-skin-tone_1f468-1f3fd-200d-1f4bb.png"
-    BOT_AVATAR = "https://em-content.zobj.net/source/apple/354/robot_1f916.png"
+    # Avatar emojis for consistent chat message display (non-copyrighted)
+    USER_AVATAR = "👤"
+    BOT_AVATAR = "🤖"
+    
+    @staticmethod
+    def get_large_emoji_avatar(emoji: str, size: int = 64) -> str:
+        """Create a larger emoji avatar using data URI.
+        
+        Args:
+            emoji: The emoji character to display
+            size: Size of the emoji in pixels
+            
+        Returns:
+            Data URI string for the emoji image
+        """
+        import base64
+        
+        # Create SVG with larger emoji
+        svg_content = f'''
+        <svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 {size} {size}">
+            <text x="50%" y="50%" font-size="{size-10}" text-anchor="middle" dominant-baseline="central" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">
+                {emoji}
+            </text>
+        </svg>
+        '''
+        
+        # Encode as data URI
+        encoded = base64.b64encode(svg_content.encode()).decode()
+        return f"data:image/svg+xml;base64,{encoded}"
+    
+    @staticmethod
+    def get_user_avatar() -> str:
+        """Get larger user avatar."""
+        return ChatbotUI.get_large_emoji_avatar(ChatbotUI.USER_AVATAR)
+    
+    @staticmethod
+    def get_bot_avatar() -> str:
+        """Get larger bot avatar."""
+        return ChatbotUI.get_large_emoji_avatar(ChatbotUI.BOT_AVATAR)
     
     @staticmethod
     def apply_enhanced_styling() -> None:
@@ -199,7 +235,7 @@ class ChatbotUI:
             avatar_url: Optional custom avatar URL (uses defaults if None)
         """
         if avatar_url is None:
-            avatar_url = ChatbotUI.USER_AVATAR if role == "user" else ChatbotUI.BOT_AVATAR
+            avatar_url = ChatbotUI.get_user_avatar() if role == "user" else ChatbotUI.get_bot_avatar()
         
         with st.chat_message(role, avatar=avatar_url):
             st.write(content)

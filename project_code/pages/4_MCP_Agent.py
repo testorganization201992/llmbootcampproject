@@ -181,10 +181,10 @@ Ask me anything! I'm powered by Model Context Protocol.
     else:
         for message in st.session_state.mcp_messages:
             if message["role"] == "user":
-                with st.chat_message("user", avatar="https://em-content.zobj.net/source/apple/354/man-technologist-medium-skin-tone_1f468-1f3fd-200d-1f4bb.png"):
+                with st.chat_message("user", avatar=ChatbotUI.get_user_avatar()):
                     st.write(message["content"])
             else:
-                with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
+                with st.chat_message("assistant", avatar=ChatbotUI.get_bot_avatar()):
                     st.write(message["content"])
 
 def main() -> None:
@@ -226,7 +226,7 @@ def main() -> None:
         st.session_state.mcp_processing = True
         try:
             # Show processing indicator
-            with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
+            with st.chat_message("assistant", avatar=ChatbotUI.get_bot_avatar()):
                 with st.spinner("Processing with MCP agent..."):
                     # Extract user query for MCP processing
                     user_query = st.session_state.mcp_messages[-1]["content"]
