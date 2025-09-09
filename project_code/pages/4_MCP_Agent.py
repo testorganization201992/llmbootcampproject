@@ -1,18 +1,23 @@
-"""
-MCP Agent Chatbot
+"""MCP Agent Chatbot Page.
+
 Demonstrates Model Context Protocol (MCP) integration for enhanced AI capabilities.
-Uses MCP server to provide tools and resources beyond standard LLM functionality.
+Connects to MCP servers to provide specialized tools and resources beyond standard
+LLM functionality, enabling extensible and context-aware AI interactions.
 """
 
 import streamlit as st
-import os
 import asyncio
-from pathlib import Path
+from typing import Dict, Any, List
+
 from ui_components import ChatbotUI, APIKeyUI
 from langchain_helpers import MCPHelper, ValidationHelper
 
-def setup_page():
-    """Set up the page with basic config."""
+def setup_page() -> None:
+    """Set up the MCP agent page with enhanced styling.
+    
+    Configures page layout and applies custom CSS optimized
+    for MCP agent interactions and tool demonstrations.
+    """
     st.set_page_config(
         page_title="MCP Agent",
         page_icon="🔧",
@@ -103,8 +108,15 @@ def setup_page():
     """, unsafe_allow_html=True)
     
 
-def configure_mcp_settings():
-    """Configure OpenAI API key and MCP URL."""
+def configure_mcp_settings() -> bool:
+    """Configure OpenAI API key and MCP server URL.
+    
+    Handles collection and validation of both the LLM API key
+    and MCP server endpoint for agent functionality.
+    
+    Returns:
+        True if both settings are configured and valid, False otherwise
+    """
     api_key = st.session_state.get("mcp_openai_key", "")
     mcp_url = st.session_state.get("mcp_server_url", "")
     
@@ -113,7 +125,7 @@ def configure_mcp_settings():
         with col2:
             st.markdown("### 🔧 Enter Configuration")
             
-            # Check if we just connected (avoid showing form again)
+            # Handle post-connection state to prevent form re-display
             if st.session_state.get("mcp_keys_connected", False):
                 st.session_state["mcp_keys_connected"] = False
                 return True
@@ -151,8 +163,12 @@ def configure_mcp_settings():
     
     return True
 
-def display_messages():
-    """Display chat messages using pure Streamlit components."""
+def display_messages() -> None:
+    """Display MCP agent chat messages with capability awareness.
+    
+    Shows conversation history or informative welcome message
+    highlighting the agent's MCP-powered capabilities and tools.
+    """
     if not st.session_state.mcp_messages:
         st.info("""🔧 **MCP Agent Ready!** 
 
@@ -171,8 +187,12 @@ Ask me anything! I'm powered by Model Context Protocol.
                 with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
                     st.write(message["content"])
 
-def main():
-    """Main application function."""
+def main() -> None:
+    """Main application function for the MCP agent page.
+    
+    Orchestrates the complete MCP workflow including server connection,
+    tool integration, and enhanced AI interactions.
+    """
     setup_page()
     
     # Page title - centered with enhanced styling
@@ -187,18 +207,18 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # Check configuration - Show login screen
+    # Validate MCP configuration before proceeding
     if not configure_mcp_settings():
         return
     
-    # Initialize messages with unique key for MCP Agent
+    # Initialize MCP agent-specific conversation history
     if "mcp_messages" not in st.session_state:
         st.session_state.mcp_messages = []
     
-    # Display messages
+    # Render conversation with MCP context awareness
     display_messages()
     
-    # Generate response if needed
+    # Process query through MCP agent with tool access
     if (st.session_state.mcp_messages and 
         st.session_state.mcp_messages[-1]["role"] == "user" and
         not st.session_state.get("mcp_processing", False)):
@@ -208,32 +228,34 @@ def main():
             # Show processing indicator
             with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
                 with st.spinner("Processing with MCP agent..."):
-                    # Get the last user message
+                    # Extract user query for MCP processing
                     user_query = st.session_state.mcp_messages[-1]["content"]
                     
-                    # Get OpenAI API key
+                    # Retrieve configuration from session state
                     openai_api_key = st.session_state.get("mcp_openai_key", "")
                     mcp_server_url = st.session_state.get("mcp_server_url", "")
                     
                     if openai_api_key and mcp_server_url:
                         try:
-                            # Create event loop for async MCP agent
+                            # Setup async event loop for MCP operations
                             loop = asyncio.new_event_loop()
                             asyncio.set_event_loop(loop)
                             
                             try:
-                                # Get MCP agent instance
+                                # Initialize MCP agent with server connection
                                 agent = loop.run_until_complete(
                                     MCPHelper.get_agent(openai_api_key, mcp_server_url)
                                 )
                                 
-                                # Prepare messages for agent
-                                messages = [{"role": msg["role"], "content": msg["content"]} 
-                                          for msg in st.session_state.mcp_messages]
+                                # Format conversation history for agent processing
+                                formatted_messages = [
+                                    {"role": msg["role"], "content": msg["content"]} 
+                                    for msg in st.session_state.mcp_messages
+                                ]
                                 
-                                # Invoke agent using helper
+                                # Process query through MCP agent
                                 response_text = loop.run_until_complete(
-                                    MCPHelper.process_mcp_query(agent, messages)
+                                    MCPHelper.process_mcp_query(agent, formatted_messages)
                                 )
                                 
                             finally:
@@ -255,9 +277,9 @@ def main():
             st.error(f"Error: {str(e)}")
             st.rerun()
 
-    # Chat input - outside container to prevent shifting
+    # MCP agent query input interface
     if prompt := st.chat_input("Ask me anything..."):
-        # Add user message and rerun to show it first
+        # Add user message to MCP conversation history
         st.session_state.mcp_messages.append({"role": "user", "content": prompt})
         st.rerun()
 

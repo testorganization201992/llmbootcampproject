@@ -1,13 +1,23 @@
-import os
+"""Chat with your Data Page.
+
+RAG (Retrieval-Augmented Generation) powered chatbot that enables
+intelligent question-answering over user-uploaded PDF documents.
+Features automatic document processing, vector search, and contextual responses.
+"""
+
 import streamlit as st
+from typing import List, Dict, Any
+
 from ui_components import ChatbotUI, APIKeyUI
 from langchain_helpers import RAGHelper, ValidationHelper
 
-# --------------------------
-# Page config
-# --------------------------
-def setup_page():
-    """Set up the page with basic config."""
+
+def setup_page() -> None:
+    """Set up the RAG page with enhanced styling.
+    
+    Configures page layout and applies custom CSS for document
+    upload interface and chat components.
+    """
     st.set_page_config(
         page_title="Chat with Documents", 
         page_icon="📄",
@@ -94,8 +104,15 @@ def setup_page():
     """, unsafe_allow_html=True)
     
 
-def configure_api_key():
-    """Configure OpenAI API key."""
+def configure_api_key() -> bool:
+    """Configure OpenAI API key for RAG functionality.
+    
+    Handles API key collection and validation specifically
+    for document processing and embedding generation.
+    
+    Returns:
+        True if API key is configured and valid, False otherwise
+    """
     api_key = st.session_state.get("rag_openai_key", "")
     
     if not api_key:
@@ -103,7 +120,7 @@ def configure_api_key():
         with col2:
             st.markdown("### 🔑 Enter API Key")
             
-            # Check if we just connected (avoid showing form again)
+            # Handle post-connection state to prevent form re-display
             if st.session_state.get("rag_key_connected", False):
                 st.session_state["rag_key_connected"] = False
                 return True
@@ -126,27 +143,35 @@ def configure_api_key():
     
     return True
 
-# --------------------------
-# Utilities
-# --------------------------
-
-# --------------------------
-# Simple Agentic RAG Graph
-# --------------------------
-
-# --------------------------
-# App
-# --------------------------
 class CustomDataChatbot:
-    def __init__(self):
+    """RAG-powered chatbot for document question answering.
+    
+    Processes uploaded PDF documents, creates vector embeddings,
+    and enables intelligent querying with contextual responses.
+    """
+    
+    def __init__(self) -> None:
+        """Initialize the RAG chatbot with default settings."""
         self.openai_model = "gpt-4o-mini"
 
-    def setup_graph(self, uploaded_files):
+    def setup_graph(self, uploaded_files: List[Any]) -> Any:
+        """Setup RAG processing graph from uploaded documents.
+        
+        Args:
+            uploaded_files: List of Streamlit uploaded file objects
+            
+        Returns:
+            Configured RAG workflow for document Q&A
+        """
         api_key = st.session_state.get("rag_openai_key", "")
         return RAGHelper.setup_rag_system(uploaded_files, api_key)
     
-    def display_messages(self):
-        """Display chat messages using pure Streamlit components."""
+    def display_messages(self) -> None:
+        """Display document-aware chat messages.
+        
+        Shows conversation history with document context awareness
+        and helpful prompts for document-based queries.
+        """
         if st.session_state.rag_messages:
             for message in st.session_state.rag_messages:
                 if message["role"] == "user":
@@ -156,8 +181,13 @@ class CustomDataChatbot:
                     with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
                         st.write(message["content"])
 
-    def main(self):
-        # Initialize session state with unique keys
+    def main(self) -> None:
+        """Main RAG chatbot workflow.
+        
+        Manages document upload, processing, vector store creation,
+        and intelligent question-answering over document content.
+        """
+        # Initialize RAG-specific session state variables
         if "rag_uploaded_files" not in st.session_state:
             st.session_state.rag_uploaded_files = []
         if "rag_app" not in st.session_state:
@@ -165,7 +195,7 @@ class CustomDataChatbot:
         if "rag_messages" not in st.session_state:
             st.session_state.rag_messages = []
 
-        # Document upload section - centered
+        # Centered document upload interface
         col1, col2, col3 = st.columns([2, 1.5, 2])
         with col2:
             uploaded_files = st.file_uploader(
@@ -174,27 +204,30 @@ class CustomDataChatbot:
                 accept_multiple_files=True
             )
             
-            # Files are handled automatically - no need for success message
+            # Document processing handled automatically upon upload
                 
         st.markdown("<br>", unsafe_allow_html=True)
 
+        # Process documents when uploaded or changed
         if uploaded_files:
-            current = {f.name for f in uploaded_files}
-            prev = {f.name for f in st.session_state.get("rag_uploaded_files", [])}
-            if current != prev or st.session_state.rag_app is None:
+            current_files = {f.name for f in uploaded_files}
+            previous_files = {f.name for f in st.session_state.get("rag_uploaded_files", [])}
+            
+            # Rebuild RAG system if files changed or system not initialized
+            if current_files != previous_files or st.session_state.rag_app is None:
                 st.session_state.rag_uploaded_files = uploaded_files
                 with st.spinner("📚 Processing documents..."):
                     st.session_state.rag_app = self.setup_graph(uploaded_files)
         else:
-            # Show welcome screen when no documents uploaded
+            # Show welcome message when no documents are uploaded
             if not st.session_state.rag_messages:
                 self.display_messages()
             return
             
-        # Display messages
+        # Render conversation history with document context
         self.display_messages()
         
-        # Generate response if needed
+        # Process document-based query and generate contextual response
         if (st.session_state.rag_messages and 
             st.session_state.rag_messages[-1]["role"] == "user" and
             not st.session_state.get("rag_processing", False)):
@@ -204,13 +237,22 @@ class CustomDataChatbot:
                 # Show processing indicator
                 with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
                     with st.spinner("Analyzing documents..."):
-                        # Get the last user message
+                        # Extract user query for document analysis
                         user_query = st.session_state.rag_messages[-1]["content"]
                         
-                        result = st.session_state.rag_app.invoke(
-                            {"question": user_query, "mode": "fact", "documents": [], "generation": ""}
+                        # Process query through RAG workflow
+                        result = st.session_state.rag_app.invoke({
+                            "question": user_query, 
+                            "mode": "fact", 
+                            "documents": [], 
+                            "generation": ""
+                        })
+                        
+                        # Extract generated response with fallback
+                        answer = (
+                            result.get("generation", "").strip() or 
+                            "I couldn't find enough information in the documents to answer that."
                         )
-                        answer = result.get("generation", "").strip() or "I couldn't find enough information in the documents to answer that."
                         
                         # Add assistant response
                         st.session_state.rag_messages.append({"role": "assistant", "content": answer})
@@ -223,14 +265,18 @@ class CustomDataChatbot:
                 st.error(f"Error: {str(e)}")
                 st.rerun()
 
-        # Chat input - outside container to prevent shifting
+        # Document query input interface
         if prompt := st.chat_input("Ask about your documents..."):
-            # Add user message and rerun to show it first
+            # Add user query to conversation history
             st.session_state.rag_messages.append({"role": "user", "content": prompt})
             st.rerun()
 
-def main():
-    """Main application function."""
+def main() -> None:
+    """Main application function for the RAG chatbot page.
+    
+    Orchestrates document upload, processing, and intelligent
+    question-answering workflow with enhanced UI styling.
+    """
     setup_page()
     
     # Page title - centered with enhanced styling
@@ -245,16 +291,14 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # Check API key - Show login screen
+    # Validate API key configuration for document processing
     if not configure_api_key():
         return
     
-    # Run chatbot
+    # Initialize and run the document-aware chatbot
     app = CustomDataChatbot()
     app.main()
 
-# --------------------------
-# Run
-# --------------------------
+# Application entry point
 if __name__ == "__main__":
     main()

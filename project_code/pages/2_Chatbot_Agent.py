@@ -1,14 +1,27 @@
+"""Agent Chatbot Page.
+
+AI agent with real-time web search capabilities using Tavily API.
+Features intelligent web search integration and streaming responses
+for current information and real-time data queries.
+"""
+
 import streamlit as st
-import os
+import asyncio
+from typing import Dict, Any, List
+
 from ui_components import ChatbotUI, APIKeyUI
 from langchain_helpers import AgentChatbotHelper, ValidationHelper
-import asyncio
-
-# Use centralized UI setup - no need for separate function
     
 
-def configure_api_keys():
-    """Configure OpenAI and Tavily API keys."""
+def configure_api_keys() -> bool:
+    """Configure OpenAI and Tavily API keys for the agent.
+    
+    Handles collection and validation of both required API keys
+    for the web search-enabled agent functionality.
+    
+    Returns:
+        True if both API keys are configured and valid, False otherwise
+    """
     openai_key = st.session_state.get("agent_openai_key", "")
     tavily_key = st.session_state.get("agent_tavily_key", "")
     
@@ -17,7 +30,7 @@ def configure_api_keys():
         with col2:
             st.markdown("### 🔑 Enter API Keys")
             
-            # Check if we just connected (avoid showing form again)
+            # Handle post-connection state to prevent form re-display
             if st.session_state.get("agent_keys_connected", False):
                 st.session_state["agent_keys_connected"] = False
                 return True
@@ -59,16 +72,27 @@ def configure_api_keys():
     return True
 
 class ChatbotTools:
-    def __init__(self):
-        pass
-
-    def setup_agent(self):
+    """Core functionality class for the agent chatbot.
+    
+    Manages agent setup, message display, and response processing
+    with web search capabilities through Tavily integration.
+    """
+    def setup_agent(self) -> Any:
+        """Setup the web search-enabled agent.
+        
+        Returns:
+            Configured LangGraph agent with Tavily search tools
+        """
         openai_key = st.session_state.get("agent_openai_key", "")
         tavily_key = st.session_state.get("agent_tavily_key", "")
         return AgentChatbotHelper.setup_agent(openai_key, tavily_key)
     
-    def display_messages(self):
-        """Display chat messages using pure Streamlit components."""
+    def display_messages(self) -> None:
+        """Display chat messages with web search context awareness.
+        
+        Shows conversation history or informative welcome message
+        highlighting the agent's web search capabilities.
+        """
         if not st.session_state.agent_messages:
             st.info("🌐 Ask me anything and I'll search the web for real-time information!")
         else:
@@ -80,18 +104,23 @@ class ChatbotTools:
                     with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
                         st.write(message["content"])
 
-    def main(self):
-        # Initialize messages with unique key
+    def main(self) -> None:
+        """Main agent chatbot logic.
+        
+        Manages the complete agent workflow including message processing,
+        web search integration, and streaming response handling.
+        """
+        # Initialize agent-specific conversation history
         if "agent_messages" not in st.session_state:
             st.session_state.agent_messages = []
             
-        # Setup agent
+        # Configure agent with web search capabilities
         agent = self.setup_agent()
         
-        # Display messages
+        # Render current conversation with search context
         self.display_messages()
         
-        # Generate response if needed
+        # Process user query through web search agent
         if (st.session_state.agent_messages and 
             st.session_state.agent_messages[-1]["role"] == "user" and
             not st.session_state.get("agent_processing", False)):
@@ -101,10 +130,10 @@ class ChatbotTools:
                 # Show processing indicator
                 with st.chat_message("assistant", avatar="https://em-content.zobj.net/source/apple/354/robot_1f916.png"):
                     with st.spinner("Searching the web..."):
-                        # Get the last user message
+                        # Extract user query for web search processing
                         user_query = st.session_state.agent_messages[-1]["content"]
                         
-                        # Process with helper function
+                        # Process query through agent with search capabilities
                         loop = asyncio.new_event_loop()
                         asyncio.set_event_loop(loop)
                         try:
@@ -125,16 +154,20 @@ class ChatbotTools:
                 st.error(f"Error: {str(e)}")
                 st.rerun()
         
-        # Chat input - outside container to prevent shifting
+        # Chat input for web search queries
         if prompt := st.chat_input("Ask me anything about current events..."):
-            # Add user message and rerun to show it first
+            # Add user message to conversation history
             st.session_state.agent_messages.append({"role": "user", "content": prompt})
             st.rerun()
 
 
-def main():
-    """Main application function."""
-    # Use centralized UI setup and header
+def main() -> None:
+    """Main application function for the agent chatbot page.
+    
+    Orchestrates the complete agent workflow including UI setup,
+    API key validation, and agent-based conversation processing.
+    """
+    # Configure page with centralized UI components
     ChatbotUI.setup_page("Agent Chatbot", "🌐")
     ChatbotUI.render_page_header(
         "🌐", 
@@ -142,11 +175,11 @@ def main():
         "AI agent with real-time web search capabilities"
     )
     
-    # Check API keys - Show login screen
+    # Validate required API keys before proceeding
     if not configure_api_keys():
         return
     
-    # Run chatbot
+    # Initialize and run the agent chatbot interface
     obj = ChatbotTools()
     obj.main()
 

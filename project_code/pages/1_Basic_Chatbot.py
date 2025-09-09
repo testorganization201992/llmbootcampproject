@@ -1,17 +1,26 @@
-"""
-Modern Beautiful Chatbot
-A sleek, modern chatbot with the best appearance and functionality.
+"""Basic Chatbot Page.
+
+A modern, conversational AI chatbot with customizable response styles
+and conversation memory. Features a clean interface with enhanced styling
+and reliable message processing.
 """
 
 import streamlit as st
-import os
+from typing import Dict, Any, List
+
 from ui_components import ChatbotUI, APIKeyUI
 from langchain_helpers import BasicChatbotHelper, ValidationHelper
+
+
+def configure_api_key() -> bool:
+    """Configure OpenAI API key for the chatbot.
     
-
-
-def configure_api_key():
-    """Configure OpenAI API key."""
+    Handles API key collection, validation, and session state management.
+    Uses centralized UI components for consistent styling.
+    
+    Returns:
+        True if API key is configured and valid, False otherwise
+    """
     api_key = st.session_state.get("basic_openai_key", "")
     
     if not api_key:
@@ -43,13 +52,24 @@ def configure_api_key():
     
     return True
 
-def display_messages():
-    """Display chat messages using centralized UI components."""
+def display_messages() -> None:
+    """Display chat messages using centralized UI components.
+    
+    Shows conversation history or welcome message if no messages exist.
+    Uses the ChatbotUI component for consistent message rendering.
+    """
     if not ChatbotUI.display_chat_messages(st.session_state.basic_messages):
         st.info("🤖 Ask me anything and I'll be happy to help!")
 
-def main():
-    """Main application function."""
+def main() -> None:
+    """Main application function.
+    
+    Orchestrates the entire chatbot page including:
+    - Page setup and styling
+    - API key configuration
+    - Chat interface and message processing
+    - Response generation with error handling
+    """
     # Use centralized UI setup
     ChatbotUI.setup_page("Modern AI Chat", "🚀")
     
@@ -60,19 +80,19 @@ def main():
         "Your intelligent AI conversation partner with memory"
     )
     
-    # Check API key - Show login screen
+    # Validate API key configuration before proceeding
     if not configure_api_key():
         return
     
     
-    # Main chat container
+    # Initialize chat interface and processing logic
     with st.container():
         
-        # Simple chain with default configuration
+        # Configure LangChain with default chatbot settings
         config = BasicChatbotHelper.get_default_config()
         api_key = st.session_state.get("basic_openai_key", "")
         
-        # Always recreate chain if API key exists and chain doesn't exist or API key changed
+        # Ensure chain is properly initialized with current API key
         if api_key and ("basic_chain" not in st.session_state or 
                        st.session_state.get("basic_current_api_key") != api_key):
             st.session_state.basic_chain = BasicChatbotHelper.build_chain(config, api_key)
@@ -81,14 +101,14 @@ def main():
             st.error("API key not found. Please refresh the page.")
             return
         
-        # Initialize messages with unique key
+        # Initialize conversation history in session state
         if "basic_messages" not in st.session_state:
             st.session_state.basic_messages = []
         
-        # Display messages
+        # Render current conversation history
         display_messages()
         
-        # Generate response if needed
+        # Process pending user message and generate AI response
         if (st.session_state.basic_messages and 
             st.session_state.basic_messages[-1]["role"] == "user" and
             not st.session_state.get("basic_processing", False)):
