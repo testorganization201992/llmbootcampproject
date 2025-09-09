@@ -1,10 +1,8 @@
-# LLM Bootcamp Project
+# AI Chatbot Platform
 
-A comprehensive chatbot application demonstrating advanced AI features with custom personalities, multi-tool agents, document processing capabilities, and Model Context Protocol integration.
+An enterprise-grade conversational AI platform featuring intelligent agents, document processing, web search integration, and adaptive prompt optimization through Model Context Protocol.
 
 ## 🚀 Quick Start
-
-Navigate to the `project_code/` directory for the complete Streamlit application:
 
 ```bash
 cd project_code/
@@ -12,89 +10,85 @@ pip install -r requirements.txt
 streamlit run Home.py
 ```
 
-## 📁 Project Structure
+## 📁 System Architecture
 
 ```
-├── project_code/          # Complete Streamlit application
-│   ├── .streamlit/        # Streamlit configuration
-│   ├── assets/            # Static assets (logos, images)
-│   ├── pages/             # Individual chatbot pages
-│   ├── tmp/               # Temporary files for document processing
-│   ├── Home.py            # Main application entry point
-│   ├── server.py          # MCP server for prompt optimization
-│   ├── requirements.txt   # Python dependencies
-│   ├── ui_components.py   # Reusable UI components
-│   ├── langchain_helpers.py # LangChain integration helpers
-│   └── agent_service.py   # MCP agent service
-├── Exercises/             # Hands-on coding exercises
-│   ├── 1_Basic_Chatbot.md
-│   ├── 2_Chatbot_Agent.md
-│   ├── 3_Chat_with_your_Data.md
-│   └── 4_MCP_Prompt_Optimizer.md
-├── User_Guide/            # User guides for each chatbot
-│   ├── 1_Basic_Chatbot.md
-│   ├── 2_Chatbot_Agent.md
-│   ├── 3_Chat_with_your_Data.md
-│   └── 4_MCP_Agent.md
-├── docs/                  # Technical documentation
-│   ├── Code_Architecture.md # Technical implementation details
-│   └── streamlit_conversion_guide.md
-└── README.md              # This file
+├── project_code/          # Core application
+│   ├── .streamlit/        # Configuration
+│   ├── assets/            # Static resources
+│   ├── pages/             # Interface modules
+│   ├── tmp/               # Processing workspace
+│   ├── Home.py            # Application entry point
+│   ├── server.py          # MCP optimization server
+│   ├── requirements.txt   # Dependencies
+│   ├── ui_components.py   # Interface components
+│   ├── langchain_helpers.py # AI integration layer
+│   └── agent_service.py   # Agent orchestration
+├── Exercises/             # Implementation guides
+├── User_Guide/            # Operation manuals
+├── docs/                  # Technical specifications
+└── README.md              # Documentation
 ```
 
-## Project Overview
+## Platform Capabilities
 
-### Implemented Applications:
-1. **Basic Chatbot** - Conversational AI with memory
-2. **Agent Chatbot** - Web search integration 
-3. **Document Chat** - RAG with PDF support
-4. **MCP Agent** - Model Context Protocol integration
+### Built-in Applications
+1. **Basic Chatbot** - Dialogue system with context memory and customizable personalities
+2. **Agent Chatbot** - Web-enabled research and real-time information retrieval 
+3. **Document Chat** - PDF document analysis and question-answering with RAG
+4. **MCP Agent** - Model Context Protocol integration with tool access
 
-### Exercise Projects:
-- **Exercise 4: MCP Prompt Optimizer** - Build prompt optimization using LangMem
+### Exercise Implementation
+- **MCP Prompt Optimizer** - Feedback-driven prompt optimization using LangMem with persistent storage
 
-### Technical Features:
-- LangGraph conversation memory
-- Tavily web search integration
-- FAISS vector storage for documents
-- Model Context Protocol server
-- Modular UI components
-
-## 📚 Documentation & Learning
-
-### For Users:
-- **[User Guides](User_Guide/)** - How to use each chatbot interface
-- **[Project Code README](project_code/README.md)** - Deployment instructions
-
-### For Developers:
-- **[Exercises](Exercises/)** - Step-by-step coding exercises
-- **[Code Architecture](docs/Code_Architecture.md)** - Technical implementation details
+### Key Technologies
+- **Conversation Memory**: LangGraph state management
+- **Web Intelligence**: Tavily search integration
+- **Document Processing**: FAISS vector storage with multi-format support
+- **Protocol Integration**: Model Context Protocol server architecture
+- **Optimization**: LangMem-powered prompt enhancement
+- **Interface**: Modular Streamlit components
 
 ## 🛠️ Technology Stack
 
-- **Frontend**: Streamlit with custom UI components
-- **AI/ML**: OpenAI GPT models, LangChain, LangGraph
-- **Search**: Tavily API for real-time web search
-- **Document Processing**: FAISS vectorstore, PDF parser
-- **Memory**: LangMem for prompt optimization
-- **Protocols**: Model Context Protocol (MCP) with FastMCP
-- **Architecture**: Modular design with clean separation of concerns
+- **Frontend**: Streamlit with custom component library
+- **AI/ML**: OpenAI GPT-4, LangChain orchestration, LangGraph workflows
+- **Search**: Tavily API for real-time information retrieval
+- **Document Processing**: FAISS vectorstore, multi-format parsing (PDF, MD, HTML)
+- **Optimization**: LangMem adaptive prompt tuning
+- **Protocols**: Model Context Protocol (MCP) with FastMCP framework
+- **Architecture**: Service-oriented design with clean abstractions
 
-## 🎓 Educational Use
+## 📚 Documentation
 
-Perfect for:
-- Learning AI application development
-- Understanding LangChain and LangGraph patterns
-- Exploring Model Context Protocol
-- Building production-ready chatbot systems
-- Hands-on experience with RAG and agent architectures
+### Operations
+- **[User Guides](User_Guide/)** - Application operation procedures
+- **[Deployment Guide](project_code/README.md)** - System setup instructions
 
-## 🚀 Getting Started
+### Development
+- **[Implementation Guides](Exercises/)** - Component development workflows
+- **[Architecture Overview](docs/Code_Architecture.md)** - System design specifications
 
-1. **Clone the repository**
-2. **Navigate to project_code/** 
-3. **Install dependencies**: `pip install -r requirements.txt`
-4. **Configure API keys** (OpenAI, Tavily)
-5. **Run the app**: `streamlit run Home.py`
-6. **Explore the 4 different chatbot implementations**
-7. **Try the exercises** to build your own versions!
+## Deployment
+
+1. **System Setup**
+   ```bash
+   git clone <repository>
+   cd project_code/
+   pip install -r requirements.txt
+   ```
+
+2. **Configuration**
+   - OpenAI API key for language models
+   - Tavily API key for web search
+   - MCP server endpoint configuration
+
+3. **Launch**
+   ```bash
+   streamlit run Home.py
+   ```
+
+4. **Access**
+   - Navigate through 4 different AI interfaces
+   - Configure agents for specific use cases
+   - Upload documents for analysis
