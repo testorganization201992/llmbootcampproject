@@ -13,7 +13,7 @@
 1. **Configuration Setup**
    ```
    OpenAI API Key: sk-proj-[your-openai-api-key]
-   MCP Server URL: https://mcp.zapier.com (or your MCP server URL)
+   MCP Server URL: https://example.com/mcp (your MCP server URL)
    Click: "Connect" button
    Check: Both settings validated successfully
    ```
@@ -28,7 +28,7 @@ Check: Bot lists available MCP tools and connected apps
 
 ```
 Type: "Show me what actions I can perform through your MCP connection"
-Check: Bot explains available Zapier integrations and tools
+Check: Bot explains available MCP server tools and integrations
 ```
 
 #### Productivity Tasks
