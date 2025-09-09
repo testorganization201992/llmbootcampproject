@@ -71,13 +71,13 @@ def main() -> None:
     - Response generation with error handling
     """
     # Use centralized UI setup
-    ChatbotUI.setup_page("Modern AI Chat", "🚀")
+    ChatbotUI.setup_page("AI Chat", "🚀")
     
     # Use centralized header component
     ChatbotUI.render_page_header(
         "🚀", 
         "Basic Chatbot", 
-        "Your intelligent AI conversation partner with memory"
+        "AI conversation assistant with memory"
     )
     
     # Validate API key configuration before proceeding

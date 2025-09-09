@@ -1,310 +1,176 @@
-# LLM Bootcamp Project - Code Architecture Documentation
+# Code Architecture
 
-## Overview
-This document provides comprehensive technical documentation of the modular chatbot architecture built with professional software development principles. The system demonstrates advanced LangChain integration, sophisticated UI components, and enterprise-grade design patterns.
+## System Overview
 
----
+The LLM Bootcamp project implements a chatbot architecture with 4 applications and separation of concerns.
 
-## Core Architecture Components
-
-### 1. LangChain Helpers System (`langchain_helpers.py`)
-
-The helper system implements the Single Responsibility Principle, where each class handles one specific domain of functionality. This design provides:
-
-- **Testability**: Each component can be unit tested independently
-- **Reusability**: Helper methods can be used across multiple chatbot pages
-- **Maintainability**: Changes to LLM logic only need to happen in one place
-- **Extensibility**: New chatbot types can easily leverage existing helpers
-
-#### Helper Classes Structure:
-
-**`BasicChatbotHelper` (lines 18-81)**
-- Handles standard conversational AI with memory management
-- Provides sophisticated chain building with configurable parameters
-- Implements intelligent conversation context management
-- Supports multiple AI personalities through dynamic system prompts
-
-```python
-# Key Methods:
-@staticmethod
-def build_chain(config: Dict[str, Any], api_key: str = None) -> Any
-def invoke_with_memory(chain: Any, user_input: str, chat_history: List[Dict[str, str]]) -> Any
-def get_default_config() -> Dict[str, Any]
-```
-
-**`AgentChatbotHelper` (lines 84-133)**
-- Manages web-enabled agents with tool integration
-- Implements LangGraph-based agent workflows
-- Provides streaming response processing
-- Supports multiple tool integration (Tavily, Wikipedia, Arxiv)
-
-**`RAGHelper` (lines 136-263)**
-- Implements document-based question answering with vector search
-- Uses FAISS vector store for efficient document retrieval
-- Provides intelligent query classification (summary vs fact-based)
-- Supports multiple document formats (PDF, TXT, DOCX)
-
-**`MCPHelper` (lines 266-282)**
-- Provides Model Context Protocol functionality for external tool access
-- Enables integration with external services and APIs
-- Supports asynchronous processing for enhanced performance
-
-**`ValidationHelper` (lines 285-301)**
-- Centralizes input validation and API key format checking
-- Ensures data integrity across all chatbot implementations
-- Provides consistent error handling and user feedback
-
-#### Import Strategy Analysis:
-
-Each helper class imports only the dependencies it needs, following the Interface Segregation Principle:
-
-```python
-# Basic chatbot: Simple conversational AI
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-
-# Agent chatbot: Web search capabilities  
-from langchain_tavily import TavilySearch
-from langgraph.prebuilt import create_react_agent
-
-# RAG helper: Document processing and search
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores import FAISS
-```
-
----
-
-### 2. UI Components System (`ui_components.py`)
-
-#### Professional Design System Features:
-
-**CSS Custom Properties for Maintainable Theming:**
-```css
-:root {
-    --primary-bg: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-    --secondary-bg: rgba(42, 42, 42, 0.9);
-    --accent-color: #4CAF50;
-    --text-primary: #ffffff;
-    --text-secondary: #b0b0b0;
-    --border-radius: 10px;
-    --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-```
-
-**Design System Benefits:**
-- **Consistent Color Palette**: Professional visual hierarchy
-- **Responsive Design**: Adapts to different screen sizes
-- **Modern Aesthetics**: Gradients, shadows, and smooth transitions
-- **Accessibility**: High contrast ratios for readability
-
-#### UI Component Classes:
-
-**`ChatbotUI` (lines 8-195)**
-- Provides standardized chat interfaces and message display
-- Implements consistent page headers and styling systems
-- Manages responsive design and user interaction patterns
-
-**`HomePageUI` (lines 198-275)**
-- Manages the main navigation interface
-- Provides dynamic page discovery and health monitoring
-- Implements consistent branding and navigation patterns
-
-**`APIKeyUI` (lines 278-303)**
-- Handles secure API key input forms with validation
-- Provides real-time user feedback and error handling
-- Ensures consistent credential management across pages
-
----
-
-### 3. Component Integration Patterns
-
-#### Clean Integration Architecture:
-
-**Separation of Concerns:**
-```python
-# Clean separation through targeted imports
-from ui_components import ChatbotUI, APIKeyUI
-from langchain_helpers import BasicChatbotHelper, ValidationHelper
-```
-
-**Integration Layers:**
-- **UI Layer**: `ChatbotUI` handles all visual presentation
-- **Business Logic**: `BasicChatbotHelper` manages LLM interactions
-- **Validation**: `ValidationHelper` ensures data integrity
-- **API Management**: `APIKeyUI` provides secure credential handling
-
-**Function Separation Pattern:**
-```python
-def configure_api_key():        # Uses APIKeyUI + ValidationHelper
-    # Secure API key management
-
-def display_messages():         # Uses ChatbotUI  
-    # Consistent message presentation
-
-def main():                     # Orchestrates all components
-    # Clean integration of all modules
-```
-
----
-
-### 4. Advanced Memory Implementation
-
-#### Streamlit Session State Architecture:
-
-**Session Isolation Pattern:**
-```python
-# Initialize messages with unique key for isolation
-if "basic_messages" not in st.session_state:
-    st.session_state.basic_messages = []
-```
-
-**Key Features:**
-- **Namespace Isolation**: Each chatbot page uses unique prefixes (`basic_`, `agent_`, `rag_`)
-- **State Persistence**: Messages survive page reloads and navigation
-- **Memory Efficiency**: Only stores essential conversation data
-- **Thread Safety**: Streamlit handles concurrent user sessions automatically
-
-#### Sophisticated Conversation Flow Management:
-
-**User Input Processing:**
-```python
-if prompt := st.chat_input("Type your message here..."):
-    # Immediate message addition for responsive UI
-    st.session_state.basic_messages.append({"role": "user", "content": prompt})
-    st.rerun()  # Trigger immediate UI update
-```
-
-**Intelligent Response Generation:**
-```python
-# Detect when response generation is needed
-if (st.session_state.basic_messages and 
-    st.session_state.basic_messages[-1]["role"] == "user" and
-    not st.session_state.get("basic_processing", False)):
+```mermaid
+graph TD
+    A[Home.py] --> B[Basic Chatbot]
+    A --> C[Agent Chatbot]
+    A --> D[Document Chat]
+    A --> E[MCP Agent]
     
-    # Prevent double processing with flag
-    st.session_state.basic_processing = True
+    B --> F[ui_components.py]
+    C --> F
+    D --> F
+    E --> F
     
-    # Generate contextual response using full conversation history
-    response = BasicChatbotHelper.invoke_with_memory(
-        st.session_state.basic_chain, 
-        user_input, 
-        st.session_state.basic_messages  # Full conversation context
-    )
+    B --> G[langchain_helpers.py]
+    C --> G
+    D --> G
+    E --> G
+    
+    E --> H[agent_service.py]
+    E --> I[server.py]
 ```
 
-**Advanced Flow Control Features:**
-- **Race Condition Prevention**: Processing flag prevents duplicate responses
-- **Immediate UI Feedback**: User messages appear instantly
-- **Error Recovery**: Try/catch blocks handle API failures gracefully
-- **State Synchronization**: Consistent state across UI updates
+## Core Components
 
----
+### 1. UI Layer (`ui_components.py`)
 
-### 5. Configuration Management System
+**ChatbotUI Class:**
+- Chat interface components
+- Avatar management with SVG emoji rendering
+- Page setup and styling systems
 
-#### Sophisticated Chain Building Process:
+**APIKeyUI Class:**
+- API key input forms with validation
+- Credential management
 
-**Comprehensive Configuration System:**
-```python
-llm_kwargs = {
-    "model": config["model"],                    # Flexible model selection
-    "temperature": config["temperature"],        # Creativity control
-    "max_tokens": config["max_tokens"],         # Response length management
-    "top_p": config.get("top_p", 1.0),         # Nucleus sampling
-    "frequency_penalty": config.get("frequency_penalty", 0.0),  # Repetition control
-    "presence_penalty": config.get("presence_penalty", 0.0),    # Topic diversity
-    "streaming": False                           # Response delivery mode
-}
+### 2. Business Logic (`langchain_helpers.py`)
+
+**Helper Classes:**
+- `BasicChatbotHelper`: Conversation AI with memory
+- `AgentChatbotHelper`: Web search integration via Tavily
+- `RAGHelper`: PDF document processing with FAISS
+- `MCPHelper`: Model Context Protocol integration
+- `ValidationHelper`: Input validation
+
+### 3. MCP Integration
+
+**agent_service.py:**
+- ThemeAgent class for MCP client connections
+- Multi-server configuration support
+- Async agent processing
+
+**server.py:**
+- FastMCP server implementation
+- LangMem prompt optimization tools
+- Stdio transport support
+
+## Data Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant P as Page
+    participant H as Helper
+    participant L as LangChain
+    participant A as API
+    
+    U->>P: Input message
+    P->>H: Process with helper
+    H->>L: Build/invoke chain
+    L->>A: API call (OpenAI/Tavily)
+    A->>L: Response
+    L->>H: Formatted response
+    H->>P: Final output
+    P->>U: Display message
 ```
 
-#### Dynamic System Prompt Architecture:
+## Memory Architecture
 
-**Multiple AI Personalities:**
-- **Professional Mode**: Formal business communication style
-- **Casual Mode**: Conversational and approachable tone
-- **Creative Mode**: Imaginative and varied responses
-- **Technical Mode**: Precise technical explanations
-- **Balanced Mode**: Adaptable default behavior
+### Session State Management
+Each chatbot maintains isolated state:
+- `basic_messages`: Basic chatbot conversations
+- `agent_messages`: Agent chatbot with search
+- `rag_messages`: Document chat conversations
+- `mcp_messages`: MCP agent conversations
 
-**Prompt Template Design:**
-```python
-prompt = ChatPromptTemplate.from_messages([
-    ("system", system_message),           # Sets AI personality and behavior
-    ("placeholder", "{chat_history}"),    # Maintains conversation context
-    ("human", "{input}"),                # Current user query
-])
+### Processing Flow
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Processing: User input
+    Processing --> Response: Generate with helper
+    Response --> Idle: Update session state
+    Processing --> Error: API failure
+    Error --> Idle: Show error message
 ```
 
-#### Advanced Parameter Understanding:
+## MCP Architecture
 
-**Parameter Effects:**
-- **Temperature**: Controls creativity vs consistency (0.0-2.0)
-- **Top_p (Nucleus Sampling)**: Controls diversity of word choice (0.1-1.0)
-- **Frequency_penalty**: Reduces repetition of frequently used words (0.0-2.0)
-- **Presence_penalty**: Encourages discussion of new topics (0.0-2.0)
-- **Max_tokens**: Balances response depth with processing speed
+### Client-Server Model
+```mermaid
+graph LR
+    A[MCP Agent Page] --> B[agent_service.py]
+    B --> C[MultiServerMCPClient]
+    C --> D[Local server.py<br/>stdio transport]
+    C --> E[Remote MCP Server<br/>HTTP transport]
+    
+    D --> F[LangMem Tools]
+    E --> G[External Tools]
+```
 
----
+### Tools Integration
+- **Local**: Prompt optimization via LangMem
+- **Remote**: External MCP server tools
+- **Transport**: Stdio for local, HTTP for remote
 
-## Professional Software Architecture Benefits
+## File Organization
 
-### SOLID Principles Implementation:
+```
+project_code/
+├── Home.py                 # Main app entry
+├── pages/                  # Individual chatbot pages
+│   ├── 1_Basic_Chatbot.py
+│   ├── 2_Chatbot_Agent.py
+│   ├── 3_Chat_with_your_Data.py
+│   └── 4_MCP_Agent.py
+├── ui_components.py        # UI layer
+├── langchain_helpers.py    # Business logic
+├── agent_service.py        # MCP client
+├── server.py              # MCP server
+└── requirements.txt        # Dependencies
+```
 
-**1. Single Responsibility Principle (SRP)**
-- **BasicChatbotHelper**: Only handles conversational AI logic
-- **ChatbotUI**: Only manages user interface rendering
-- **ValidationHelper**: Only performs input validation
-- **Each class has one reason to change**
+## Key Design Patterns
 
-**2. Open/Closed Principle (OCP)**
-- **Extension Ready**: New chatbot types extend existing helpers without modification
-- **Configuration Extensible**: New AI personalities added without changing core logic
-- **Plugin Architecture**: New UI components integrate seamlessly
+### Separation of Concerns
+- **UI**: Streamlit components, styling, user interaction
+- **Business Logic**: LangChain integration, API calls
+- **Validation**: Input checking, error handling
 
-**3. Liskov Substitution Principle (LSP)**
-- **Interface Compatibility**: All helper classes follow consistent method signatures
-- **Polymorphic Usage**: Different configurations can be substituted seamlessly
+### Factory Pattern
+- Helper classes create configured LangChain objects
+- UI components generate consistent interfaces
 
-**4. Interface Segregation Principle (ISP)**
-- **Focused Imports**: Classes import only required dependencies
-- **Minimal Interfaces**: Each helper exposes only necessary methods
+### Configuration Management
+- API keys injected at runtime
+- Model parameters configurable per chatbot
+- Environment-based settings
 
-**5. Dependency Inversion Principle (DIP)**
-- **API Keys**: Injected at runtime rather than hardcoded
-- **Configuration**: Passed as parameters for flexibility
-- **LLM Models**: Configurable through dependency injection
+## Technology Integration
 
-### Design Patterns Implementation:
+### LangChain Components
+- **ChatOpenAI**: GPT model integration
+- **LangGraph**: Agent workflows with memory
+- **FAISS**: Vector storage for documents
+- **Tavily**: Web search integration
 
-**Factory Pattern**
-- **Configuration Factory**: Different config methods create specialized setups
-- **Chain Building**: `build_chain()` creates configured LLM instances
-- **Component Factory**: UI components created with consistent patterns
+### Streamlit Features
+- Session state for conversation persistence
+- File upload for document processing
+- UI updates with `st.rerun()`
 
-**Observer Pattern**
-- **Session State**: Components observe and react to state changes
-- **Real-time Updates**: UI updates automatically when state changes
+### MCP Implementation
+- **FastMCP**: Server framework
+- **LangMem**: Prompt optimization
+- **Multi-transport**: Stdio and HTTP support
 
-**Strategy Pattern**
-- **AI Personalities**: Different response strategies based on configuration
-- **Tool Selection**: Agent chooses appropriate tools based on query type
-
-### Enterprise-Grade Practices:
-
-**Development Quality:**
-- **Type Hints**: Clear parameter and return types throughout
-- **Documentation**: Comprehensive docstrings for all public methods
-- **Error Handling**: Graceful degradation and user-friendly error messages
-- **Testing Ready**: Modular design enables unit testing
-
-**Production Readiness:**
-- **Scalability**: Architecture supports multiple concurrent users
-- **Performance**: Efficient session state management and chain reuse
-- **Security**: Secure API key handling and input validation
-- **Maintainability**: Clear separation of concerns and modular design
-
-**Code Quality:**
-- **DRY Principle**: Single helper method used across multiple pages
-- **Configuration Patterns**: Shared config structure for all implementations
-- **Consistent Styling**: Common UI patterns centralized
-- **Maintenance Efficiency**: Single point of change for shared functionality
+This architecture provides:
+- **Modularity**: Independent components
+- **Scalability**: Interfaces for adding features
+- **Maintainability**: Separation of concerns
+- **Testability**: Isolated business logic

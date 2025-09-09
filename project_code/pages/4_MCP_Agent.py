@@ -202,7 +202,7 @@ def main() -> None:
             🔧 MCP Agent
         </h1>
         <p style='font-size: 0.9rem; color: #a0a0a0; margin-top: -0.5rem;'>
-            Advanced AI agent powered by Model Context Protocol
+            AI agent powered by Model Context Protocol
         </p>
     </div>
     """, unsafe_allow_html=True)

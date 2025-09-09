@@ -349,7 +349,7 @@ class HomePageUI:
                 🤖 LLM Bootcamp Project
             </h1>
             <p style="font-size: 1.125rem; color: #a0a0a0; margin-bottom: 2rem;">
-                Explore advanced AI chatbot capabilities with multiple specialized agents
+                Explore AI chatbot with multiple capabilities
             </p>
         </div>
         """, unsafe_allow_html=True)
