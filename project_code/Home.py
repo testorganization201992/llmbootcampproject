@@ -25,34 +25,6 @@ if os.path.exists(pages_dir):
     page_files = glob.glob(f"{pages_dir}/*.py")
     page_files.sort()
     
-    def extract_page_info(file_path):
-        """Extract title and description from file docstring or comments"""
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-                
-            # Look for docstring at top of file
-            if '"""' in content:
-                start = content.find('"""')
-                end = content.find('"""', start + 3)
-                if start != -1 and end != -1:
-                    docstring = content[start+3:end].strip()
-                    lines = docstring.split('\n')
-                    title = lines[0].strip() if lines else ""
-                    description = lines[1].strip() if len(lines) > 1 else ""
-                    return title, description
-        except:
-            pass
-        
-        # Fallback: generate from filename
-        base_name = os.path.basename(file_path)
-        clean_name = base_name.replace('.py', '').replace('_', ' ')
-        # Remove leading numbers like "1_"
-        if clean_name[0].isdigit() and '_' in clean_name:
-            clean_name = clean_name.split('_', 1)[1]
-        title = clean_name.title()
-        return title, "AI assistant page"
-    
     def get_page_info(filename):
         """Get specific page info based on filename"""
         filename_lower = filename.lower()
