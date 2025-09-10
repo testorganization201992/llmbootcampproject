@@ -1,6 +1,6 @@
 # AI Chatbot Platform
 
-A conversational AI platform featuring intelligent agents, document processing, web search integration, and adaptive prompt optimization through Model Context Protocol.
+An enterprise-grade conversational AI platform featuring intelligent agents, document processing, web search integration, and adaptive prompt optimization through Model Context Protocol.
 
 ## 🚀 Quick Start
 
@@ -62,4 +62,36 @@ streamlit run Home.py
 - **Protocols**: Model Context Protocol (MCP) with FastMCP framework
 - **Architecture**: Service-oriented design with clean abstractions
 
+## 📚 Documentation
 
+### Operations
+- **[User Guides](User_Guide/)** - Application operation procedures
+- **[Deployment Guide](project_code/README.md)** - System setup instructions
+
+### Development
+- **[Implementation Guides](Exercises/)** - Component development workflows
+- **[Architecture Overview](docs/Code_Architecture.md)** - System design specifications
+
+## Deployment
+
+1. **System Setup**
+   ```bash
+   git clone <repository>
+   cd project_code/
+   pip install -r requirements.txt
+   ```
+
+2. **Configuration**
+   - OpenAI API key for language models
+   - Tavily API key for web search
+   - MCP server endpoint configuration
+
+3. **Launch**
+   ```bash
+   streamlit run Home.py
+   ```
+
+4. **Access**
+   - Navigate through 4 different AI interfaces
+   - Configure agents for specific use cases
+   - Upload documents for analysis

@@ -9,8 +9,8 @@ import streamlit as st
 import asyncio
 from typing import Dict, Any, List
 
-from ui_components import ChatbotUI, APIKeyUI
-from langchain_helpers import MCPHelper, ValidationHelper
+from ui_components.home_ui import ChatbotUI, APIKeyUI
+from utils.langchain_helpers import MCPHelper, ValidationHelper
 
 def setup_page() -> None:
     """Set up the MCP agent page with enhanced styling.

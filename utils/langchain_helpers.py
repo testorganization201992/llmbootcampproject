@@ -426,7 +426,7 @@ class MCPHelper:
         Returns:
             Initialized MCP agent ready for use
         """
-        from agent_service import get_agent
+        from services.agent_service import get_agent
         return await get_agent(openai_api_key, mcp_server_url)
     
     @staticmethod

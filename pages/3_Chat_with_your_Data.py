@@ -8,8 +8,8 @@ Features automatic document processing, vector search, and contextual responses.
 import streamlit as st
 from typing import List, Dict, Any
 
-from ui_components import ChatbotUI, APIKeyUI
-from langchain_helpers import RAGHelper, ValidationHelper
+from ui_components.home_ui import ChatbotUI, APIKeyUI
+from utils.langchain_helpers import RAGHelper, ValidationHelper
 
 
 def setup_page() -> None:

@@ -8,8 +8,8 @@ and reliable message processing.
 import streamlit as st
 from typing import Dict, Any, List
 
-from ui_components import ChatbotUI, APIKeyUI
-from langchain_helpers import BasicChatbotHelper, ValidationHelper
+from ui_components.home_ui import ChatbotUI, APIKeyUI
+from utils.langchain_helpers import BasicChatbotHelper, ValidationHelper
 
 
 def configure_api_key() -> bool:
