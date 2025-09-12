@@ -11,6 +11,9 @@ langgraph==0.6.6
 # UI Framework
 streamlit>=1.28.0
 
+# Environment Variables
+python-dotenv>=1.0.0
+
 # Core Dependencies
 tiktoken==0.11.0
 faiss-cpu==1.12.0

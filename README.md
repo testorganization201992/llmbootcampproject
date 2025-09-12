@@ -4,6 +4,12 @@ An enterprise-grade conversational AI platform featuring intelligent agents, doc
 
 ## 🚀 Quick Start
 
+### Prerequisites
+- Python 3.9+
+- Git
+
+### Installation & Setup
+
 ```bash
 # Clone and navigate to the project
 git clone <repository>
@@ -11,10 +17,35 @@ cd agenticai-project/
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Launch the application
-streamlit run Home.py
 ```
+
+### Environment Configuration
+
+1. **Get Required API Keys**
+   - **OpenAI API Key** (Required): Visit https://platform.openai.com/api-keys
+   - **Tavily API Key** (For Search Agent): Visit https://tavily.com/ for free account
+
+2. **Create Environment File**
+   ```bash
+   # Create .env file in project root
+   OPENAI_API_KEY=sk-proj-your-actual-openai-key
+   TAVILY_API_KEY=tvly-your-actual-tavily-key
+   MCP_SERVER_URL=http://localhost:8000
+   ```
+
+3. **Start MCP Server** (Optional - for Prompt Optimization)
+   ```bash
+   # In one terminal
+   python server.py
+   ```
+
+4. **Launch Application**
+   ```bash
+   # In another terminal
+   streamlit run Home.py
+   ```
+
+🎉 **Access**: Open http://localhost:8501 in your browser
 
 ## 📁 System Architecture
 
@@ -61,10 +92,10 @@ The codebase follows a modular, service-oriented architecture with clear separat
 - **`pages/`** - Individual application modules with specific AI capabilities
 
 ### Built-in Applications
-1. **Basic Chatbot** - Dialogue system with context memory and customizable personalities
-2. **Agent Chatbot** - Web-enabled research and real-time information retrieval 
-3. **Document Chat** - PDF document analysis and question-answering with RAG
-4. **MCP Agent** - Model Context Protocol integration with tool access
+1. **Basic Chatbot** - Dialogue system with context memory and customizable personalities *(Requires: OpenAI API key)*
+2. **Agent Chatbot** - Web-enabled research and real-time information retrieval *(Requires: OpenAI + Tavily API keys)*
+3. **Document Chat** - PDF document analysis and question-answering with RAG *(Requires: OpenAI API key)*
+4. **MCP Agent** - Model Context Protocol integration with tool access *(Requires: OpenAI API key + MCP server)*
 
 ### Exercise Implementations
 1. **Basic Chatbot** - Conversational AI with customizable personalities and response styles
@@ -106,24 +137,46 @@ The codebase follows a modular, service-oriented architecture with clear separat
 
 ## Deployment
 
-1. **System Setup**
-   ```bash
-   git clone <repository>
-   cd agenticai-project/
-   pip install -r requirements.txt
-   ```
+### System Setup
+```bash
+git clone <repository>
+cd agenticai-project/
+pip install -r requirements.txt
+```
 
-2. **Configuration**
-   - OpenAI API key for language models
-   - Tavily API key for web search
-   - MCP server endpoint configuration
+### Configuration
+Create a `.env` file in the project root:
+```bash
+OPENAI_API_KEY=sk-proj-your-actual-openai-key
+TAVILY_API_KEY=tvly-your-actual-tavily-key  # Optional, for web search
+MCP_SERVER_URL=http://localhost:8000        # Optional, for MCP features
+```
 
-3. **Launch**
-   ```bash
-   streamlit run Home.py
-   ```
+### Launch
+```bash
+# Start MCP server (optional, for prompt optimization)
+python server.py
 
-4. **Access**
-   - Navigate through 4 different AI interfaces
-   - Configure agents for specific use cases
-   - Upload documents for analysis
+# In another terminal, start the main application
+streamlit run Home.py
+```
+
+### Access
+- Navigate to http://localhost:8501
+- Explore 4 different AI interfaces
+- Configure agents for specific use cases
+- Upload documents for analysis
+
+## 🔧 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "API key not found" | Check `.env` file exists in project root |
+| "MCP Server offline" | Run `python server.py` in separate terminal |
+| "Invalid API key" | Verify API keys are correct and active |
+| Import errors | Run `pip install -r requirements.txt` |
+
+## 🔒 Security Notes
+- Never commit your `.env` file to git
+- Keep API keys private and rotate regularly
+- Use environment variables for production deployments
