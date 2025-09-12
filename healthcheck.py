@@ -76,8 +76,11 @@ def check_project_structure():
     
     required_files = [
         "Home.py",
-        "pages/1_Basic_Chatbot.py", 
-        "themes/modern_theme.py",
+        "pages/1_Basic_Chatbot.py",
+        "pages/2_Chatbot_Agent.py", 
+        "pages/3_Chat_with_your_Data.py",
+        "pages/4_MCP_Agent.py",
+        "config/api_config.py",
         "requirements.txt"
     ]
     
@@ -134,19 +137,26 @@ def check_port_availability():
             print_status(f"Port {port} - AVAILABLE", "SUCCESS")
 
 def check_api_key():
-    """Check for OpenAI API key."""
+    """Check for API keys in .env file."""
     print_status("Checking API key configuration...")
     
+    # Check for .env file
+    if not Path(".env").exists():
+        print_status(".env file not found", "WARNING")
+        print_status("Create .env file with API keys", "INFO")
+        return False
+    
+    # Check environment variables
     api_key = os.environ.get("OPENAI_API_KEY")
     if api_key:
         if api_key.startswith("sk-"):
             print_status("OpenAI API key found in environment", "SUCCESS")
+            return True
         else:
             print_status("Invalid API key format", "ERROR")
-        return True
+            return False
     else:
-        print_status("OpenAI API key not found in environment", "WARNING")
-        print_status("Set with: export OPENAI_API_KEY=your_key_here", "INFO")
+        print_status("OpenAI API key not found - check .env file", "WARNING")
         return False
 
 def test_basic_chatbot_import():
@@ -168,8 +178,8 @@ def suggest_fixes():
     """Provide suggestions for common issues."""
     print_status("=== COMMON FIXES ===", "INFO")
     print_status("1. Install dependencies: pip install -r requirements.txt", "INFO")
-    print_status("2. Activate virtual environment: source venv/bin/activate", "INFO") 
-    print_status("3. Set API key: export OPENAI_API_KEY=your_key_here", "INFO")
+    print_status("2. Create .env file with API keys", "INFO")
+    print_status("3. Set API keys in .env: OPENAI_API_KEY=sk-your-key", "INFO")
     print_status("4. Kill existing processes: pkill -f streamlit", "INFO")
     print_status("5. Restart Streamlit: streamlit run Home.py", "INFO")
     print_status("6. Check browser URL: http://localhost:8501", "INFO")

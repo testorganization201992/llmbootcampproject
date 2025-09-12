@@ -1,68 +1,18 @@
 """UI Components and Styling Module.
 
 Centralized UI styling and components for the LLM Bootcamp Project.
-Provides reusable UI components and consistent styling across all pages:
-- ChatbotUI: Core chat interface components and styling
-- HomePageUI: Home page specific components and layouts
-- APIKeyUI: API key configuration forms and validation
+Provides reusable UI components and consistent styling across all pages.
 """
 
 import streamlit as st
 
+
 class ChatbotUI:
-    """Centralized UI components and styling for chatbot pages.
-    
-    Provides consistent chat interface components, page setup utilities,
-    and enhanced dark theme styling for all chatbot pages.
-    """
-    
-    # Avatar emojis for consistent chat message display (non-copyrighted)
-    USER_AVATAR = "👤"
-    BOT_AVATAR = "🤖"
-    
-    @staticmethod
-    def get_large_emoji_avatar(emoji: str, size: int = 64) -> str:
-        """Create a larger emoji avatar using data URI.
-        
-        Args:
-            emoji: The emoji character to display
-            size: Size of the emoji in pixels
-            
-        Returns:
-            Data URI string for the emoji image
-        """
-        import base64
-        
-        # Create SVG with larger emoji
-        svg_content = f'''
-        <svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 {size} {size}">
-            <text x="50%" y="50%" font-size="{size-10}" text-anchor="middle" dominant-baseline="central" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">
-                {emoji}
-            </text>
-        </svg>
-        '''
-        
-        # Encode as data URI
-        encoded = base64.b64encode(svg_content.encode()).decode()
-        return f"data:image/svg+xml;base64,{encoded}"
-    
-    @staticmethod
-    def get_user_avatar() -> str:
-        """Get larger user avatar."""
-        return ChatbotUI.get_large_emoji_avatar(ChatbotUI.USER_AVATAR)
-    
-    @staticmethod
-    def get_bot_avatar() -> str:
-        """Get larger bot avatar."""
-        return ChatbotUI.get_large_emoji_avatar(ChatbotUI.BOT_AVATAR)
+    """Centralized UI components and styling for chatbot pages."""
     
     @staticmethod
     def apply_enhanced_styling() -> None:
-        """Apply enhanced dark theme styling to the page.
-        
-        Injects custom CSS for a modern, dark-themed interface with
-        gradient effects, enhanced buttons, and improved visual hierarchy.
-        """
+        """Apply enhanced dark theme styling to the page."""
         st.markdown("""
         <style>
             /* Enhanced chat styling */
@@ -171,29 +121,12 @@ class ChatbotUI:
                 border-color: #00d4aa;
                 box-shadow: 0 0 20px rgba(0, 212, 170, 0.2);
             }
-            
-            /* Enhanced progress bars */
-            .stProgress > div > div {
-                background: linear-gradient(135deg, #00d4aa, #00a883);
-            }
-            
-            /* Loading spinner enhancement */
-            .stSpinner {
-                color: #00d4aa;
-            }
         </style>
         """, unsafe_allow_html=True)
     
     @staticmethod
     def setup_page(title: str, icon: str, layout: str = "wide", sidebar_state: str = "collapsed") -> None:
-        """Setup page configuration with enhanced styling.
-        
-        Args:
-            title: Page title for browser tab
-            icon: Page icon emoji or image
-            layout: Streamlit layout mode ('wide' or 'centered')
-            sidebar_state: Initial sidebar state ('collapsed' or 'expanded')
-        """
+        """Setup page configuration with enhanced styling."""
         st.set_page_config(
             page_title=title,
             page_icon=icon,
@@ -204,16 +137,7 @@ class ChatbotUI:
     
     @staticmethod
     def render_page_header(icon: str, title: str, subtitle: str) -> None:
-        """Render enhanced page header with title and subtitle.
-        
-        Creates a centered, styled header with gradient effects and
-        proper typography hierarchy.
-        
-        Args:
-            icon: Header icon emoji or image
-            title: Main page title
-            subtitle: Descriptive subtitle text
-        """
+        """Render enhanced page header with title and subtitle."""
         st.markdown(f"""
         <div style='text-align: center; margin: 0.5rem 0 1rem 0;'>
             <h1 style='font-size: 2.625rem; margin-bottom: 1rem; text-shadow: 0 0 30px rgba(0, 212, 170, 0.5);'>
@@ -224,198 +148,80 @@ class ChatbotUI:
             </p>
         </div>
         """, unsafe_allow_html=True)
-    
-    @staticmethod
-    def render_chat_message(role: str, content: str, avatar_url: str = None) -> None:
-        """Render chat message with proper avatar.
-        
-        Args:
-            role: Message role ('user' or 'assistant')
-            content: Message content text
-            avatar_url: Optional custom avatar URL (uses defaults if None)
-        """
-        if avatar_url is None:
-            avatar_url = ChatbotUI.get_user_avatar() if role == "user" else ChatbotUI.get_bot_avatar()
-        
-        with st.chat_message(role, avatar=avatar_url):
-            st.write(content)
-    
-    @staticmethod
-    def render_processing_message(message: str = "Processing...", avatar_url: str = None):
-        """Render processing message with spinner.
-        
-        Args:
-            message: Processing status message to display
-            avatar_url: Optional custom avatar URL for the processing message
-            
-        Yields:
-            Context manager for the processing spinner
-        """
-        if avatar_url is None:
-            avatar_url = ChatbotUI.BOT_AVATAR
-        
-        with st.chat_message("assistant", avatar=avatar_url):
-            with st.spinner(message):
-                yield
-    
-    @staticmethod
-    def display_chat_messages(messages: list) -> bool:
-        """Display list of chat messages with proper avatars.
-        
-        Args:
-            messages: List of message dictionaries with 'role' and 'content' keys
-            
-        Returns:
-            True if messages were displayed, False if no messages to display
-        """
-        if not messages:
-            return False
-        
-        for message in messages:
-            ChatbotUI.render_chat_message(
-                message["role"], 
-                message["content"]
-            )
-        return True
 
 
 class HomePageUI:
-    """UI components specific to the home page.
-    
-    Provides specialized components for the landing page including
-    hero sections, feature cards, and navigation buttons.
-    """
+    """UI components specific to the home page."""
     
     @staticmethod
     def apply_home_styling() -> None:
-        """Apply enhanced styling specific to the home page.
-        
-        Adds custom CSS for enhanced cards, navigation buttons,
-        and feature list styling optimized for the landing page.
-        """
+        """Apply enhanced styling specific to the home page."""
         st.markdown("""
         <style>
-            /* Enhanced card styling */
+            /* Enhanced navigation buttons */
             .stButton > button {
-                background: linear-gradient(135deg, #00d4aa, #00a883);
-                border: none;
+                height: 4rem;
+                width: 100%;
                 border-radius: 15px;
+                border: 2px solid rgba(0, 212, 170, 0.3);
+                background: linear-gradient(135deg, #1e1e2e, #2a2a3a);
                 color: white;
-                font-weight: 600;
-                padding: 1rem 2rem;
-                transition: all 0.3s ease;
-                box-shadow: 0 4px 20px rgba(0, 212, 170, 0.3);
                 font-size: 1.1rem;
-                height: 80px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                margin-bottom: 1rem;
             }
             
             .stButton > button:hover {
                 transform: translateY(-3px);
+                border-color: #00d4aa;
                 box-shadow: 0 8px 25px rgba(0, 212, 170, 0.4);
-                background: linear-gradient(135deg, #00e6c0, #00cc99);
+                background: linear-gradient(135deg, #00d4aa, #00a883);
             }
             
-            /* Enhanced main title */
-            .main-title {
-                background: linear-gradient(135deg, #00d4aa, #ffffff, #00d4aa);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                font-weight: 800;
-                text-shadow: 0 0 40px rgba(0, 212, 170, 0.5);
-            }
-            
-            /* Feature list styling */
-            .feature-list {
+            /* Feature cards styling */
+            .feature-card {
                 background: linear-gradient(135deg, #1e1e2e, #2a2a3a);
-                padding: 2rem;
+                border: 1px solid rgba(0, 212, 170, 0.2);
                 border-radius: 15px;
-                border: 1px solid rgba(0, 212, 170, 0.1);
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-                margin-top: 2rem;
+                padding: 1.5rem;
+                margin: 1rem 0;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                transition: all 0.3s ease;
+            }
+            
+            .feature-card:hover {
+                transform: translateY(-2px);
+                border-color: #00d4aa;
+                box-shadow: 0 6px 20px rgba(0, 212, 170, 0.3);
             }
         </style>
         """, unsafe_allow_html=True)
     
     @staticmethod
     def render_hero_section() -> None:
-        """Render the hero section for home page.
-        
-        Creates the main landing page header with gradient title,
-        descriptive subtitle, and proper spacing.
-        """
+        """Render the hero section for the home page."""
         st.markdown("""
-        <div style="text-align: center; margin: 1rem 0 2rem 0;">
-            <h1 class="main-title" style="font-size: 3rem; margin-bottom: 1rem;">
-                🤖 LLM Bootcamp Project
+        <div style='text-align: center; margin: 2rem 0;'>
+            <h1 style='font-size: 3rem; margin-bottom: 1rem; background: linear-gradient(135deg, #00d4aa, #ffffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>
+                🤖 AI Chatbot Platform
             </h1>
-            <p style="font-size: 1.125rem; color: #a0a0a0; margin-bottom: 2rem;">
-                Explore AI chatbot with multiple capabilities
+            <p style='font-size: 1.2rem; color: #a0a0a0; margin-bottom: 2rem;'>
+                Enterprise-grade conversational AI with intelligent agents, document processing, and web search integration
             </p>
         </div>
         """, unsafe_allow_html=True)
     
     @staticmethod
     def render_feature_card(icon: str, title: str, description: str) -> None:
-        """Render individual feature card.
-        
-        Args:
-            icon: Feature icon emoji or image
-            title: Feature title text
-            description: Feature description text
-        """
+        """Render a feature card with icon, title, and description."""
         st.markdown(f"""
-        <div style="
-            background: linear-gradient(135deg, #1e1e2e, #2a2a3a);
-            padding: 1rem;
-            margin: 0.5rem 0;
-            border-radius: 10px;
-            border-left: 4px solid #00d4aa;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        ">
-            <strong style="color: #00d4aa;">{icon} {title}</strong> - <span style="color: #cccccc;">{description}</span>
+        <div class="feature-card">
+            <h3 style="color: #00d4aa; margin-bottom: 0.5rem;">
+                {icon} {title}
+            </h3>
+            <p style="color: #cccccc; font-size: 0.9rem; margin: 0;">
+                {description}
+            </p>
         </div>
         """, unsafe_allow_html=True)
-
-
-class APIKeyUI:
-    """UI components for API key configuration.
-    
-    Provides reusable forms and input components for collecting
-    and validating API keys and configuration settings.
-    """
-    
-    @staticmethod
-    def render_api_key_form(title: str = "🔑 Enter API Key", inputs: list = None) -> dict:
-        """Render centered API key configuration form.
-        
-        Creates a responsive, centered form for collecting API keys
-        and other configuration inputs with validation.
-        
-        Args:
-            title: Form title to display
-            inputs: List of input configuration dictionaries
-            
-        Returns:
-            Dictionary of input values if form submitted, None otherwise
-        """
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown(f"### {title}")
-            
-            # Render configured input fields
-            input_values = {}
-            if inputs:
-                for input_config in inputs:
-                    input_values[input_config["key"]] = st.text_input(
-                        input_config["label"],
-                        type="password" if input_config.get("password", True) else "text",
-                        placeholder=input_config.get("placeholder", ""),
-                        value=input_config.get("value", ""),
-                        key=input_config["key"]
-                    )
-            
-            # Submit button with full-width styling
-            if st.button("Connect", type="primary", use_container_width=True):
-                return input_values
-        
-        return None
