@@ -57,15 +57,11 @@ def main():
     # Setup page
     ChatbotUI.setup_page("MCP Agent", "🔧")
     
-    # Add logo and API configuration to sidebar
-    with st.sidebar:
-        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-        st.image("assets/dsd_logo.png", width=150, caption="Data Science Dojo")
-        st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("---")
-    
     # Setup API keys UI
     api_keys_configured = setup_api_keys_ui()
+
+    # Add logo to the sidebar
+    ChatbotUI.add_sidebar_logo()
     
     # Only proceed if API keys are configured
     if not api_keys_configured:

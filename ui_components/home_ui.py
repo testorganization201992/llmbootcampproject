@@ -219,6 +219,24 @@ class ChatbotUI:
             initial_sidebar_state=sidebar_state
         )
         ChatbotUI.apply_enhanced_styling()
+
+    @staticmethod
+    def add_sidebar_logo():
+        """Add centered logo to sidebar - reusable across all pages"""
+        with st.sidebar:
+            # Create columns for better centering
+            col1, col2, col3 = st.columns([1, 2, 1])
+            
+            with col2:
+                st.image("assets/dsd_logo.png", width=120)
+            
+            # Center the caption text
+            st.markdown(
+                "<div style='text-align: center; margin-top: -10px; font-size: 14px; color: var(--text-color); font-weight: 500;'>Data Science Dojo</div>", 
+                unsafe_allow_html=True
+            )
+            
+            st.markdown("---")
     
     @staticmethod
     def render_page_header(icon: str, title: str, subtitle: str) -> None:

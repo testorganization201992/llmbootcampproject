@@ -3,7 +3,7 @@ import streamlit as st
 from config.app_config import setup_page_config
 from config.api_config import setup_api_keys_ui, show_getting_started_info
 from utils.page_utils import PageDiscovery
-from ui_components.home_ui import HomePageUI
+from ui_components.home_ui import HomePageUI, ChatbotUI
 
 # Configure the app
 setup_page_config()
@@ -12,17 +12,7 @@ setup_page_config()
 api_keys_configured = setup_api_keys_ui()
 
 # Add logo to the sidebar
-with st.sidebar:
-    # Open a div for centering
-    st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-    
-    # Use st.image so Streamlit can load the file
-    st.image("assets/dsd_logo.png", width=150, caption="Data Science Dojo")
-    
-    # Close the div
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("---")
+ChatbotUI.add_sidebar_logo()
 
 # Apply styling and render hero
 HomePageUI.apply_home_styling()
