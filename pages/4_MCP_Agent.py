@@ -7,7 +7,7 @@ LLM functionality, enabling extensible and context-aware AI interactions.
 
 import streamlit as st
 import asyncio
-from config.api_config import get_openai_api_key, get_mcp_config, display_missing_keys_error
+from config.api_config import get_openai_api_key, get_mcp_config, get_user_mcp_server_url, display_missing_keys_error, setup_api_keys_ui
 from services.agent_service import get_agent
 from ui_components.home_ui import ChatbotUI
 
@@ -25,10 +25,20 @@ def check_mcp_server_running(mcp_config):
 def display_mcp_server_status(mcp_config):
     """Display MCP server connection status."""
     with st.container():
-        col1, col2 = st.columns([3, 1])
+        left_spacer, col1, col2 = st.columns([1, 3, 1])
         
         with col1:
-            st.markdown(f"**MCP Server:** `{mcp_config['server_url']}`")
+            st.markdown("""
+**MCP Server:**
+                        
+Ask me anything! I'm powered by Model Context Protocol.  
+
+**I can help with:**  
+- General questions and conversations  
+- Using any tools from connected MCP servers  
+- Accessing enhanced capabilities beyond standard LLM features
+""")
+            # mcp_config['server_url']
         
         with col2:
             if check_mcp_server_running(mcp_config):
@@ -46,18 +56,42 @@ def main():
     """Main MCP agent function."""
     # Setup page
     ChatbotUI.setup_page("MCP Agent", "🔧")
+    
+    # Add logo and API configuration to sidebar
+    with st.sidebar:
+        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+        st.image("assets/dsd_logo.png", width=150, caption="Data Science Dojo")
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("---")
+    
+    # Setup API keys UI
+    api_keys_configured = setup_api_keys_ui()
+    
+    # Only proceed if API keys are configured
+    if not api_keys_configured:
+        st.info("👈 Please configure your API keys and MCP server in the sidebar to use the chatbot")
+        return
+    
     ChatbotUI.render_page_header(
         "🔧", 
         "MCP Chatbot", 
         "Model Context Protocol integration with specialized tools"
     )
     
-    # Validate API keys
+    # Validate API keys and MCP server URL
     try:
         openai_key = get_openai_api_key()
     except ValueError as e:
         st.error(f"❌ {e}")
         display_missing_keys_error(["OPENAI_API_KEY"], include_mcp_info=True)
+        return
+    
+    # Validate MCP server URL
+    try:
+        mcp_server_url = get_user_mcp_server_url()
+    except ValueError as e:
+        st.error(f"❌ {e}")
+        display_missing_keys_error(["MCP_SERVER_URL"], include_mcp_info=True)
         return
     
     # Get MCP configuration

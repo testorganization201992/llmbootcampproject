@@ -7,7 +7,7 @@ Features automatic document processing, vector search, and contextual responses.
 
 import streamlit as st
 from typing import List, Any
-from config.api_config import get_openai_api_key, display_missing_keys_error
+from config.api_config import get_openai_api_key, display_missing_keys_error, setup_api_keys_ui
 from utils.langchain_helpers import RAGHelper
 from ui_components.home_ui import ChatbotUI
 
@@ -16,6 +16,22 @@ def main():
     """Main RAG chatbot function."""
     # Setup page
     ChatbotUI.setup_page("Chat with Documents", "📚")
+    
+    # Add logo and API configuration to sidebar
+    with st.sidebar:
+        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+        st.image("assets/dsd_logo.png", width=150, caption="Data Science Dojo")
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("---")
+    
+    # Setup API keys UI
+    api_keys_configured = setup_api_keys_ui()
+    
+    # Only proceed if API keys are configured
+    if not api_keys_configured:
+        st.info("👈 Please configure your API keys in the sidebar to use the chatbot")
+        return
+    
     ChatbotUI.render_page_header(
         "📚", 
         "Chat with your Data", 
