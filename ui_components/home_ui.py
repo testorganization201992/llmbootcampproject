@@ -428,10 +428,10 @@ class HomePageUI:
         st.markdown("""
         <div style='text-align: center; margin: 2rem 0;'>
             <h1 style='font-size: 3rem; margin-bottom: 1rem; background: linear-gradient(135deg, #00d4aa, #ffffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>
-                🤖 AI Chatbot Platform
+                🤖 LLM Bootcamp Project 
             </h1>
             <p style='font-size: 1.2rem; color: #a0a0a0; margin-bottom: 2rem;'>
-                Enterprise-grade conversational AI with intelligent agents, document processing, and web search integration
+                Explore conversational AI with intelligent agents, document processing, and web search integration
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -444,8 +444,6 @@ class HomePageUI:
             <h3 style="margin-bottom: 0.5rem;">
                 {icon} {title}
             </h3>
-            <p style="font-size: 0.9rem; margin: 0;">
-                {description}
-            </p>
+            <p>{description}</p>
         </div>
         """, unsafe_allow_html=True)
