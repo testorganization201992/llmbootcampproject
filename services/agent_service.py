@@ -1,6 +1,6 @@
 """Agent service module for MCP-powered AI agents.
 
-This module provides a ThemeAgent class that integrates with Model Context Protocol
+This module provides an AIAgent class that integrates with Model Context Protocol
 (MCP) servers to create AI agents with enhanced tool capabilities.
 """
 
@@ -12,7 +12,7 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI
 
-class ThemeAgent:
+class AIAgent:
     """AI agent that integrates with Model Context Protocol servers.
     
     This agent connects to MCP servers to access specialized tools and capabilities,
@@ -25,7 +25,7 @@ class ThemeAgent:
     """
     
     def __init__(self, openai_api_key: str, server_url: str) -> None:
-        """Initialize the ThemeAgent with API key and server URL.
+        """Initialize the AIAgent with API key and server URL.
         
         Args:
             openai_api_key: Valid OpenAI API key
@@ -99,10 +99,10 @@ class ThemeAgent:
             return f"❌ Error with AI agent: {str(e)}"
 
 # Global agent instance for singleton pattern
-_global_agent: Optional[ThemeAgent] = None
+_global_agent: Optional[AIAgent] = None
 
 
-async def get_agent(openai_api_key: str, server_url: str) -> ThemeAgent:
+async def get_agent(openai_api_key: str, server_url: str) -> AIAgent:
     """Get or create a singleton agent instance.
     
     This function implements a singleton pattern to ensure only one agent
@@ -113,7 +113,7 @@ async def get_agent(openai_api_key: str, server_url: str) -> ThemeAgent:
         server_url: MCP server URL to connect to
         
     Returns:
-        Initialized ThemeAgent instance
+        Initialized AIAgent instance
         
     Note:
         The agent will be created and initialized on first call.
@@ -122,7 +122,7 @@ async def get_agent(openai_api_key: str, server_url: str) -> ThemeAgent:
     global _global_agent
     
     if _global_agent is None:
-        _global_agent = ThemeAgent(openai_api_key, server_url)
+        _global_agent = AIAgent(openai_api_key, server_url)
         await _global_agent.initialize()
         
     return _global_agent
