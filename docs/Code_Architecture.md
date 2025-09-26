@@ -50,7 +50,7 @@ graph TD
 ### 3. MCP Integration
 
 **agent_service.py:**
-- ThemeAgent class for MCP client connections
+- MCPAgent class for MCP client connections
 - Multi-server configuration support
 - Async agent processing
 
