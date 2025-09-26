@@ -26,17 +26,6 @@ pages = [
     {"icon": "🔧", "title": "MCP Chatbot", "description": "Model Context Protocol integration", "file": "pages/4_mcp_agent.py"},
 ]
 
-# Create columns based on number of pages
-num_pages = len(pages)
-cols = st.columns(num_pages)
-
-for i, page_info in enumerate(pages):
-    with cols[i]:
-        button_text = f"{page_info["icon"]} {page_info["title"]}"
-        
-        if st.button(button_text, key=page_info["file"], use_container_width=True):
-            st.switch_page(page_info["file"])
-
 # Enhanced feature list using centralized components
 st.markdown("""
 <div class="feature-list">
@@ -46,4 +35,3 @@ st.markdown("""
 
 for page_info in pages:
     HomePageUI.render_feature_card(page_info["icon"], page_info["title"], page_info["description"])
-
