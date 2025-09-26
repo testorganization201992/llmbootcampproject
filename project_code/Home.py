@@ -19,12 +19,11 @@ HomePageUI.render_hero_section()
 
 st.markdown("### Available AI Assistants:")
 
-    # Enhanced feature list using centralized components
-    st.markdown("""
-    <div class="feature-list">
-        <h3 style="color: #00d4aa; margin-bottom: 1.5rem; text-align: center;">✨ Available Features</h3>
-    </div>
-    """, unsafe_allow_html=True)
-
+# Enhanced feature list using centralized components
+st.markdown("""
+<div class="feature-list">
+    <h3 style="color: #00d4aa; margin-bottom: 1.5rem; text-align: center;">✨ Available Features</h3>
+</div>
+""", unsafe_allow_html=True)
 
 
