@@ -5,8 +5,8 @@ from ui_components import HomePageUI
 
 st.set_page_config(
     page_title="LLM Bootcamp Project",
-    page_icon=\'🤖\',
-    layout=\'wide\',
+    page_icon="🤖",
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
@@ -25,6 +25,6 @@ st.markdown("### Available AI Assistants:")
         <h3 style="color: #00d4aa; margin-bottom: 1.5rem; text-align: center;">✨ Available Features</h3>
     </div>
     """, unsafe_allow_html=True)
-    
+
 
 
